@@ -1,2 +1,13 @@
+# Test gitignore
+TEST
+# data and results
 data/
 results/
+
+# r specific files
+.Rproj.user
+.Rhistory
+.Rapp.history
+.RData
+/*_cache/
+/cache/

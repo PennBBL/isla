@@ -1,0 +1,28 @@
+---
+title: "ISLA_Reproducibility"
+output: html_document
+---
+
+This document shows how to reproduce ISLA maps for a small sample of participants. The following is just a walk through of the code; to execute it, a working version of the `imco` package is necessary, which currently only works on *singularity*.
+
+```{r}
+# Libraries, again, available on the singularity docker
+
+# library(parallel)
+# library(methods)
+# library(stringr)
+# library(fslr)
+# library(ANTsR)
+# library(extrantsr)
+# library(rlist)
+# library(dplyr)
+# library(imco)
+```
+
+Reading in the samples:
+
+```{r}
+cbf=read.csv("/data/jux/BBL/projects/isla/results/Reproducibility/cbfSample.csv")
+reho_alff=read.csv("/data/jux/BBL/projects/isla/results/Reproducibility/restSample.csv")
+```
+
