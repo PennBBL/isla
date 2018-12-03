@@ -3,6 +3,7 @@ TEST
 # data and results
 data/
 results/
+core*
 
 # r specific files
 .Rproj.user
