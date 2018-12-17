@@ -4,6 +4,7 @@ TEST
 data/
 results/
 core*
+sandbox
 
 # r specific files
 .Rproj.user
