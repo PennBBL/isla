@@ -1,7 +1,8 @@
----
-title: "Reproduce Individual ISLA Maps"
-output: html_document
----
+# How to Reproduce Individual ISLA Maps
+
+*By Tinashe M. Tapera*
+
+*Updated 20 December 2018*
 
 This document shows how to reproduce ISLA maps for a small sample of participants. The following is just a walk through of the code; to execute it, a working version of the `imco` package is necessary, which currently only works on *singularity*.
 
@@ -25,6 +26,8 @@ done
 
 The output of this step is the first set of maps `beta0.nii.gz`,`beta1.nii.gz`, and `rsquared.nii.gz` in `.../isla/results/Reproducibility/*/*/*/*/reproduced/`.
 
+This step calculates regression parameter images predicting CBF/Alff/Reho from GMD 
+
 # 2. Extrapolating Maps
 
 Using the script `SubmitReproduceExtrapolate.sh`, we loop through all of the results from the previous step and extrapolate the maps with the script `ReproduceExtrapolate.R`. This script uses the path to the input file to determine the parameters and runs extrapolation, adding the results once again to `.../isla/results/Reproducibility/*/*/*/*/reproduced/`
@@ -32,4 +35,3 @@ Using the script `SubmitReproduceExtrapolate.sh`, we loop through all of the res
 # 3. Calculating Difference Maps
 
 Finally, we use the script `SubmitReproduceDifferenceMaps.sh` to run `ReproduceDifferenceMaps.R`, which loops through all of our prior results and calculates the difference between the final Y image and the mask. The results are again written to `.../isla/results/Reproducibility/*/*/*/*/reproduced/`
-
