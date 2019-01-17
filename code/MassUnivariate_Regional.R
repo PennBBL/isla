@@ -17,8 +17,9 @@ require(purrr)
 require(tidyr)
 require(broom)
 require(readr)
+require(knitr)
 set.seed(1000)
-
+WRITE_OUT <- FALSE # write out the .rds of all the models
 #' First, gather the data and join the demographics. We also create an *ordered factor* for sex.
 
 cbf <- read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/n1601_jlfAntsCTIntersectionPcaslValues_20170403.csv") %>%
@@ -57,6 +58,13 @@ models <- nested %>%
 models %>%
   sample_n(1) %>%
   assign("roi", ., envir = .GlobalEnv) %>%
+  pull(results) %>%
+  .[[1]] %>%
+  knitr::kable(caption = paste("ROI:", roi$var))
+
+models %>%
+  sample_n(1) %>%
+  assign("roi", ., envir = .GlobalEnv) %>%
   pull(model) %>%
   .[[1]] %>%
   visreg(., "age", plot = TRUE, gg = TRUE)+
@@ -67,12 +75,10 @@ models %>%
 # as it contains list columns
 output <- file.path("/data/jux/BBL/projects/isla/results/")
 
-if(dir.exists(output)) {
+if(dir.exists(output) & WRITE_OUT) {
 
   rds_name <- paste("Univar_ROI", Sys.Date(), sep = "_") %>%
     paste(., ".rds", sep = "")
 
   save_rds(models, file = paste0(output, rds_name))
 }
-
-str(models)
