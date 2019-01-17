@@ -4,7 +4,7 @@
 
 **Last Updated Jan 8 2019**
 
-To recreate the sample see: [SampleCreation Notebook] (n1601_SampleCreationNotebook.md)
+To recreate the sample see: [SampleCreation Notebook](n1601_SampleCreationNotebook.md)
 
 To recreate single maps see: [ReproduceISLA notebook](ReproduceISLA.md)
 
