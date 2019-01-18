@@ -93,7 +93,7 @@ my_formula <- "\"~s(age,by=sex)\""
 #' We will call the voxelwrapper from outside the session, but build it in here first using string formatting and system calls, since this is a notebook.
 
 #+ run
-run_command <- sprintf("Rscript /data/joy/BBL/applications/groupAnalysis/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
+run_command <- sprintf("Rscript /data/joy/BBL/applications/groupAnalysis/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
 
 cat(run_command, file="/data/jux/BBL/projects/isla/code/sandbox/run_gam_voxelwise.sh")
 
