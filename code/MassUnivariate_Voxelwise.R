@@ -49,8 +49,13 @@ covariates_df <-
 
 head(covariates_df) %>% kable()
 
-covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates.rds" %T>%
-  saveRDS(covariates_df, .)
+if (all(purrr::map_lgl(covariates_df$path, file.exists))){
+  #ensures that all of the paths are correctly written
+
+  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates.rds" %T>%
+    saveRDS(covariates_df, .)
+
+}
 
 #' 2. `output`
 #' Quickly assign an output directory
@@ -93,7 +98,8 @@ my_formula <- "\"~s(age,by=sex)\""
 #' We will call the voxelwrapper from outside the session, but build it in here first using string formatting and system calls, since this is a notebook.
 
 #+ run
-run_command <- sprintf("Rscript /data/joy/BBL/applications/groupAnalysis/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
+# worlds longest single line of code dont judge me
+run_command <- sprintf("qsub -V -S Rscript -cwd -o /data/jux/BBL/projects/isla/code/sandbox/log -e /data/jux/BBL/projects/isla/code/sandbox/log -binding linear:5 -pe unihost 5 -l h_vmem=30.0G,s_vmem=30.0G /data/joy/BBL/applications/groupAnalysis/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
 
 cat(run_command, file="/data/jux/BBL/projects/isla/code/sandbox/run_gam_voxelwise.sh")
 
