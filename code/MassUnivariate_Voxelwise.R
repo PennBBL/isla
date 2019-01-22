@@ -42,7 +42,8 @@ all_scans <-
 covariates_df <-
   all_scans %>%
   left_join(demographics, by = "scanid") %>%
-  mutate(include = 1) # for inclusion critera
+  mutate(include = 1) %>%  # for inclusion critera
+  slice(1:20)
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
