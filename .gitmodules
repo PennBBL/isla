@@ -1,3 +1,4 @@
 [submodule "code/voxelwiseWrappers"]
 	path = code/voxelwiseWrappers
 	url = https://github.com/TinasheMTapera/voxelwiseWrappers.git
+	branch = master
