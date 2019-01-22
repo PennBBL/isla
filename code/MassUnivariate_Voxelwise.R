@@ -43,7 +43,7 @@ covariates_df <-
   all_scans %>%
   left_join(demographics, by = "scanid") %>%
   mutate(include = 1) %>%  # for inclusion critera
-  slice(1:20)
+  filter(scanid != 4445) #broken nifti for this scanID
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
@@ -98,7 +98,7 @@ my_formula <- "\"~s(age,by=sex)\""
 
 #+ run
 # worlds longest single line of code dont judge me
-run_command <- sprintf("qsub -V -S Rscript -cwd -o /data/jux/BBL/projects/isla/code/sandbox/log -e /data/jux/BBL/projects/isla/code/sandbox/log -binding linear:5 -pe unihost 5 -l h_vmem=30.0G,s_vmem=30.0G /data/joy/BBL/applications/groupAnalysis/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
+run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
 
 cat(run_command, file="/data/jux/BBL/projects/isla/code/sandbox/run_gam_voxelwise.sh")
 
