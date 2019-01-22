@@ -5,6 +5,7 @@ data/
 results/
 core*
 sandbox
+.DS_Store
 
 # r specific files
 .Rproj.user
