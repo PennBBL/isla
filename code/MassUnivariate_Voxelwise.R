@@ -17,7 +17,6 @@ suppressPackageStartupMessages({
 })
 set.seed(1000)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
-getwd()
 #' # How to Run Voxelwise `gam()` with `voxelwrapper`
 #' ## Set up
 
@@ -100,7 +99,7 @@ subjID <- "scanid"
 
 #' `formula`
 #' The formula call, as a string. Note that there needn't be any spaces
-my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
+my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
 
 #' `padjust`
 #' The output type for the model
@@ -115,8 +114,8 @@ padjust <- "fdr"
 #+ run
 # worlds longest single line of code please dont judge me
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
-
-system(run_command)
+#not run
+#system(run_command)
 
 #' ## Results
 
