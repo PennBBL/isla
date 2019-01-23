@@ -2,6 +2,9 @@
 #' title: "Multivariate Voxelwise `gam()`"
 #' author: "Tinashe M. Tapera"
 #' date: "2018-01-16"
+#' output:
+#'   github_document:
+#'     html_preview: false
 #' ---
 
 #+ setup
@@ -10,14 +13,15 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(knitr)
   library(magrittr)
+  library(stringr)
 })
 set.seed(1000)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
-
+getwd()
 #' # How to Run Voxelwise `gam()` with `voxelwrapper`
 #' ## Set up
 
-#' Here we demonstrate the multivariate voxelwise `gam()` for `CBF ~ s(age, by=sex)`, first for raw CBF data, and then, for ISLA-corrected CBF data. We walk through the arguments of the voxelwrapper, creating each within this notebook.
+#' Here we demonstrate the multivariate voxelwise `gam()` for `CBF ~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion` for a small sample, using ISLA-corrected CBF data. We walk through the arguments of the voxelwrapper, creating each within this notebook.
 #'
 #' 1. `covariates`
 #'
@@ -30,20 +34,27 @@ demographics <-
          age = ageAtScan1 / 12,
          scanid = as.character(scanid))
 
-voxelwise_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
+islaCBF_path <- file.path("/data/jux/BBL/projects/isla/data/coupling_maps_PMACS/gmd_cbf_size3")
+
+cbfMotion <-
+  read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/n1601_PcaslQaData_20170403.csv") %>%
+  select(scanid, pcaslRelMeanRMSMotion) %>%
+  mutate(scanid = as.character(scanid))
 
 all_scans <-
-  list.files(voxelwise_path) %>%
+  list.files(islaCBF_path,  pattern = "mixture_cbf_isla.nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
-  separate(path, into = c("scanid"), remove = FALSE, extra = "drop") %>%
-  mutate(path = paste(voxelwise_path,path, sep = "/")) %>%
+  mutate(scanid = str_extract(path, "[:digit:]{4,}")) %>%
   select(scanid, everything())
 
 covariates_df <-
   all_scans %>%
   left_join(demographics, by = "scanid") %>%
+  left_join(cbfMotion, by = "scanid") %>%
   mutate(include = 1) %>%  # for inclusion critera
-  filter(scanid != 4445) #broken nifti for this scanID
+  filter(scanid != 4445) %>% #broken nifti for this scanID
+  filter(complete.cases(.)) %>%
+  sample_n(30)
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
@@ -54,6 +65,7 @@ if (all(purrr::map_lgl(covariates_df$path, file.exists))){
 }
 #'
 #+ eval=FALSE
+# not run
 head(covariates_df) %>% kable()
 #'
 #' `output`
@@ -88,18 +100,24 @@ subjID <- "scanid"
 
 #' `formula`
 #' The formula call, as a string. Note that there needn't be any spaces
-my_formula <- "\"~s(age,by=sex)\""
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 
-#' The remaining arguments, `padjust`, `splits`, `residual`, and `numberofcores`, `skipfourD`, and `residual`,all remain default.
+#' `padjust`
+#' The output type for the model
+padjust <- "fdr"
+
+#' The remaining arguments, `splits`, `residual`, and `numberofcores`, `skipfourD`, and `residual`,all remain default.
 #'
 #' ## Running the Model
 #'
-#' We will call the voxelwrapper from outside the session, but build it in here first using string formatting and system calls, since this is a notebook.
+#' We will call the voxelwrapper from outside the command line like so:
 
 #+ run
-# worlds longest single line of code dont judge me
-run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula)
+# worlds longest single line of code please dont judge me
+run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
-cat(run_command, file="/data/jux/BBL/projects/isla/code/sandbox/run_gam_voxelwise.sh")
+system(run_command)
 
-#' You can then execute the script in the shell.
+#' ## Results
+
+#' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's.
