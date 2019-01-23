@@ -1,10 +1,7 @@
 #' ---
-#' title: "Multivariate Voxelwise `gam()`"
+#' title: "Multivariate Voxelwise `gam()` Example"
 #' author: "Tinashe M. Tapera"
 #' date: "2018-01-16"
-#' output:
-#'   github_document:
-#'     html_preview: false
 #' ---
 
 #+ setup
@@ -12,8 +9,10 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(dplyr)
   library(knitr)
+  library(ggplot2)
   library(magrittr)
   library(stringr)
+  library(oro.nifti)
 })
 set.seed(1000)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
@@ -120,3 +119,30 @@ run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappe
 #' ## Results
 
 #' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's.
+
+fdr_images <-
+  list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+  pattern = "fdr",
+  full.names = TRUE) %>%
+  lapply(., readNIfTI, reorient = FALSE)
+
+output_covariates <- list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+                                pattern = "fdr") %>%
+  str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
+  .[,2] %>%
+  str_replace(pattern = "sage", "s(age)") %>%
+  str_replace(pattern = "and", " & ")
+
+plotFDR <- function(nim, title) {
+
+  dat <- img_data(nim)
+  table(dat != 0) %>%
+    data.frame() %>%
+    ggplot(aes(x = Var1, y = Freq)) +
+    geom_col() +
+    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
+         x = "FDR != 0")
+}
+
+#' Below are plots of the # of non-zero FDR corrected voxels for each covariate's nifti output:
+purrr::map2(fdr_images, output_covariates, plotFDR)
