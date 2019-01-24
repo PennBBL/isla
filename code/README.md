@@ -9,3 +9,5 @@ To recreate the sample see: [SampleCreation Notebook](n1601_SampleCreationNotebo
 To recreate single maps see: [ReproduceISLA notebook](ReproduceISLA.md)
 
 To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](MassUnivariate_Regional.md)
+
+To run voxelwise GAM model on ISLA corrected CBF see: [Mass Univariate Voxelwise GAM notebook](MassUnivariate_Voxelwise.md)
