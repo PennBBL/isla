@@ -20,6 +20,7 @@ print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 #' This notebook runs all of the desired ISLA models. See [this notebook](MassUnivariate_Voxelwise.md) for a walkthrough on how it works.
 
 #' 1. islaCBF ~ s(age) + s(age, by=sex) + sex + cbfMotion (size = 3)
+print("\n\n Running: islaCBF ~ s(age) + s(age, by=sex) + sex + cbfMotion (size = 3) \n\n")
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -69,13 +70,15 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
 system(run_command)
 #' ***
 #' 2. islaCBF ~ s(age) + s(age, by=sex) + sex + cbfMotion (size = 4)
+print("Running: islaCBF ~ s(age) + s(age, by=sex) + sex + cbfMotion (size = 4)")
+
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -125,13 +128,15 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
 system(run_command)
 #' ***
 #' 3. rawCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (control)
+
+print("Running: rawCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (control)")
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -181,7 +186,7 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 

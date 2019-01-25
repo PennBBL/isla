@@ -22,6 +22,9 @@ print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 
 #' ***
 #' 1. rawsmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 3)
+
+print("Running: rawsmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 3)")
+
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -70,7 +73,7 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
@@ -78,6 +81,9 @@ system(run_command)
 
 #' ***
 #' 2. rawsmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 4)
+
+print("Running: rawsmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 4)")
+
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -126,7 +132,7 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
@@ -134,6 +140,9 @@ system(run_command)
 
 #' ***
 #' 3. islasmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 3)
+
+print("Running: islasmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 3)")
+
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -182,7 +191,7 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 
@@ -190,6 +199,9 @@ system(run_command)
 
 #' ***
 #' 4. islasmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 4)
+
+print("Running: islasmoothedCBF ~ s(age) +  s(age, by=sex) + sex + cbfMotion (size 4)")
+
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
@@ -238,7 +250,7 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 smoothing <- 0
 inclusion <- "include"
 subjID <- "scanid"
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 padjust <- "fdr"
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 

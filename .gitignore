@@ -6,6 +6,7 @@ results/
 core*
 sandbox
 .DS_Store
+Submit*
 
 # r specific files
 .Rproj.user
