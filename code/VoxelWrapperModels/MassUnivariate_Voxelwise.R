@@ -32,7 +32,7 @@ demographics <-
          age = ageAtScan1 / 12,
          scanid = as.character(scanid))
 
-islaCBF_path <- file.path("/data/jux/BBL/projects/isla/data/coupling_maps_PMACS/gmd_cbf_size3")
+CBF_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
 
 cbfMotion <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/n1601_PcaslQaData_20170403.csv") %>%
@@ -40,9 +40,9 @@ cbfMotion <-
   mutate(scanid = as.character(scanid))
 
 all_scans <-
-  list.files(islaCBF_path,  pattern = "mixture_cbf_isla.nii.gz", recursive = TRUE, full.names = TRUE) %>%
+  list.files(CBF_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
-  mutate(scanid = str_extract(path, "[:digit:]{4,}")) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   select(scanid, everything())
 
 covariates_df <-
@@ -51,8 +51,7 @@ covariates_df <-
   left_join(cbfMotion, by = "scanid") %>%
   mutate(include = 1) %>%  # for inclusion critera
   filter(scanid != 4445) %>% #broken nifti for this scanID
-  filter(complete.cases(.)) %>%
-  sample_n(30)
+  filter(complete.cases(.))
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
@@ -63,7 +62,7 @@ if (all(purrr::map_lgl(covariates_df$path, file.exists))){
 }
 #'
 #+ eval=FALSE
-# not run
+#not run
 head(covariates_df) %>% kable()
 #'
 #' `output`
@@ -98,7 +97,7 @@ subjID <- "scanid"
 
 #' `formula`
 #' The formula call, as a string. Note that there needn't be any spaces
-my_formula <- "~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion"
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
 
 #' `padjust`
 #' The output type for the model
@@ -114,35 +113,37 @@ padjust <- "fdr"
 # worlds longest single line of code please dont judge me
 run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
 #not run
-#system(run_command)
+writeLines(c("unset PYTHONPATH; unalias python
+export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh")
 
 #' ## Results
 
 #' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's.
 
-fdr_images <-
-  list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-  pattern = "fdr",
-  full.names = TRUE) %>%
-  lapply(., readNIfTI, reorient = FALSE)
+#fdr_images <-
+#  list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+#  pattern = "fdr",
+#  full.names = TRUE) %>%
+#  lapply(., readNIfTI, reorient = FALSE)
 
-output_covariates <- list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-                                pattern = "fdr") %>%
-  str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
-  .[,2] %>%
-  str_replace(pattern = "sage", "s(age)") %>%
-  str_replace(pattern = "and", " & ")
+# output_covariates <- list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+#                                pattern = "fdr") %>%
+#  str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
+#  .[,2] %>%
+#  str_replace(pattern = "sage", "s(age)") %>%
+#  str_replace(pattern = "and", " & ")
 
-plotFDR <- function(nim, title) {
+#plotFDR <- function(nim, title) {
 
-  dat <- img_data(nim)
-  table(dat != 0) %>%
-    data.frame() %>%
-    ggplot(aes(x = Var1, y = Freq)) +
-    geom_col() +
-    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
-         x = "FDR != 0")
-}
+#  dat <- img_data(nim)
+#  table(dat != 0) %>%
+#    data.frame() %>%
+#    ggplot(aes(x = Var1, y = Freq)) +
+#    geom_col() +
+#    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
+#         x = "FDR != 0")
+#}
 
 #' Below are plots of the # of non-zero FDR corrected voxels for each covariate's nifti output:
-purrr::map2(fdr_images, output_covariates, plotFDR)
+#purrr::map2(fdr_images, output_covariates, plotFDR)

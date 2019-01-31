@@ -4,10 +4,10 @@
 
 **Last Updated Jan 8 2019**
 
-To recreate the sample see: [SampleCreation Notebook](n1601_SampleCreationNotebook.md)
+To recreate the sample see: [SampleCreation Notebook](ReproducibilityScripts/n1601_SampleCreationNotebook.md)
 
-To recreate single maps see: [ReproduceISLA notebook](ReproduceISLA.md)
+To recreate single maps see: [ReproduceISLA notebook](ReproducibilityScripts/ReproduceISLA.md)
 
-To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](MassUnivariate_Regional.md)
+To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](VoxelWrapperModels/MassUnivariate_Regional.md)
 
-To run voxelwise GAM model on ISLA corrected CBF see: [Mass Univariate Voxelwise GAM notebook](MassUnivariate_Voxelwise.md)
+To run voxelwise GAM model on ISLA corrected CBF see: [Mass Univariate Voxelwise GAM notebook](VoxelWrapperModels/MassUnivariate_Voxelwise.md)
