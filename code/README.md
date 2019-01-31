@@ -8,6 +8,6 @@ To recreate the sample see: [SampleCreation Notebook](ReproducibilityScripts/n16
 
 To recreate single maps see: [ReproduceISLA notebook](ReproducibilityScripts/ReproduceISLA.md)
 
-To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](isla/code/VoxelWrapperModels/MassUnivariate_Regional.md)
+To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](VoxelWrapperModels/MassUnivariate_Regional.md)
 
-To run voxelwise GAM model on raw CBF see: [Mass Univariate Voxelwise GAM notebook](isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md)
+To run voxelwise GAM model on raw CBF see: [Mass Univariate Voxelwise GAM notebook](VoxelWrapperModels/MassUnivariate_Voxelwise.md)
