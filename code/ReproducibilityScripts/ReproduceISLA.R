@@ -9,7 +9,7 @@ scanid=as.numeric(as.character(args[2]))
 mask=as.character(args[3])
 nsize=as.numeric(as.character(args[5]))
 modality=as.character(args[4])
-sprintf("Running imco with neighbourhood: %d\nBBLID: %d\nScanID: %d\nMask: %s", nsize, bblid, scanid, mask)
+print(paste0("Running imco with neighbourhood: ", nsize, ",\nBBLID: ", bblid, "\nScanID: ", scanid, ",\nMask: ", mask))
 
 #load libraries
 packages=c("parrallel", "methods", "stringr", "fslr", "ANTsR", "extrantsr", "rlist", "dplyr", "imco")

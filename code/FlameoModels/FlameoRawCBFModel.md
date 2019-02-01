@@ -19,10 +19,11 @@ library(dplyr)
     ##     intersect, setdiff, setequal, union
 
 ``` r
+library(stringr)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 ```
 
-    ## [1] "Updated: 2019-01-31 "
+    ## [1] "Updated: 2019-02-01 "
 
 We test the following model using `flameo`: `rawCBF ~ s(age) + s(age, by=sex) + sex + cbfMotion` First, grab the demographics file and covariates.
 
@@ -51,8 +52,8 @@ covariates <-
   left_join(cbfMotion, by = "scanid") %>%
   mutate(intercept = 1,
          sex_by_age = as.numeric(sex) * age,
-         sex_sq = as.numeric(sex) ^2
-        ) %>%
+         sex_sq = as.numeric(sex) ^2) %>%
+  arrange(scanid) %>%
   select(intercept, everything(), -scanid)
 ```
 
@@ -98,19 +99,29 @@ Also include the mask file
 mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
 ```
 
-Next, merge the nifti images using `fslmerge`. This will be a long string of the paths to the images.
+Next, merge the nifti images using `fslmerge`. The argument will be a long string of the paths to the images. Specifically, we write a file called `RunFlameo.sh` that we will call from the command line in `qsub`. Use a preamble to activate the correct environment
 
 ``` r
 imagePaths <-
   list.files("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf",
-            recursive = TRUE,
-            pattern = "nii.gz",
-            full.names = TRUE)
+             pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
+  tibble(path = .) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
+  select(scanid, everything()) %>%
+  filter(scanid %in% cbf_sample$scanid) %>%
+  arrange(scanid)
 
-toMerge <- paste(imagePaths, collapse = " ")
+toMerge <- paste(imagePaths$path, collapse = " ")
 
 copefile <- "/data/jux/BBL/projects/isla/data/sandbox/merged_raw_CBF.nii.gz"
-system(sprintf("fslmerge -t %s %s", copefile, toMerge), wait = TRUE)
+run_command <- sprintf("fslmerge -t %s %s", copefile, toMerge)
+
+write(c("unset PYTHONPATH; unalias python",
+             "export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH",
+             "source activate py2k",
+             run_command),
+           "/data/jux/BBL/projects/isla/code/qsub_Calls/RunFlameo.Sh",
+           append = FALSE)
 ```
 
 Finally, we write out the call to `RunFlameo.sh`
@@ -124,7 +135,5 @@ if(!dir.exists(output_dir)) {
 run_command <- sprintf("flameo --copefile=%s  --mask=%s  --dm=%s --tc=%s --cs=%s --runmode=flame1 --ld=%s",
                        copefile, mask, dm, tc, cs, output_dir)
 
-writeLines(c("unset PYTHONPATH; unalias python
-export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/RunFlameo.Sh")
+write(run_command, "/data/jux/BBL/projects/isla/code/qsub_Calls/RunFlameo.Sh", append = TRUE)
 ```
