@@ -5,6 +5,7 @@
 #' ---
 
 library(dplyr)
+library(stringr)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 
 #' We test the following model using `flameo`:
@@ -35,8 +36,8 @@ covariates <-
   left_join(cbfMotion, by = "scanid") %>%
   mutate(intercept = 1,
          sex_by_age = as.numeric(sex) * age,
-         sex_sq = as.numeric(sex) ^2
-        ) %>%
+         sex_sq = as.numeric(sex) ^2) %>%
+  arrange(scanid) %>%
   select(intercept, everything(), -scanid)
 
 #' The covariates file ends in `.mat` (from matlab), and denotes is a matrix of the covariates. We use `Text2Vest` in the bash shell to create the flameo compatible file.
@@ -63,11 +64,14 @@ mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/g
 
 imagePaths <-
   list.files("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf",
-            recursive = TRUE,
-            pattern = "nii.gz",
-            full.names = TRUE)
+             pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
+  tibble(path = .) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
+  select(scanid, everything()) %>%
+  filter(scanid %in% cbf_sample$scanid) %>%
+  arrange(scanid)
 
-toMerge <- paste(imagePaths, collapse = " ")
+toMerge <- paste(imagePaths$path, collapse = " ")
 
 copefile <- "/data/jux/BBL/projects/isla/data/sandbox/merged_raw_CBF.nii.gz"
 system(sprintf("fslmerge -t %s %s", copefile, toMerge), wait = TRUE)
