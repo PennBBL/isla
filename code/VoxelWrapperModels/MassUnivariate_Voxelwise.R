@@ -119,13 +119,17 @@ source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Call
 
 #' ## Results
 
-#' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's.
-
+#' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's. First, read in the NIfTI outputs and mask:
 fdr_images <-
   list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
   pattern = "fdr",
   full.names = TRUE) %>%
   lapply(., readNIfTI, reorient = FALSE)
+
+mask_img <- readNIfTI(mask)
+maskdat <- img_data(mask_img)
+
+#' Also grab a list of the covariates:
 
 output_covariates <- list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
                                 pattern = "fdr") %>%
@@ -134,16 +138,27 @@ output_covariates <- list.files("/data/jux/BBL/projects/isla/results/rawCBF/n113
   str_replace(pattern = "sage", "s(age)") %>%
   str_replace(pattern = "and", " & ")
 
-plotFDR <- function(nim, title) {
+#' We write a function to find the voxels where the mask applies, and count how many of these voxels are less than our *p* threshold of 0.05:
 
-  dat <- img_data(nim)
-  table(dat != 0) %>%
+returnFDR <- function(nim, title) {
+
+  tempdat <- img_data(nim)
+  tempdat <- tempdat[maskdat == 1]
+  table(tempdat < 0.05) %>%
     data.frame() %>%
-    ggplot(aes(x = Var1, y = Freq)) +
-    geom_col() +
-    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
-         x = "FDR != 0")
+    mutate(Covariate = title) %>%
+    rename(Significant = Var1) %>%
+    return()
 }
 
+fdr_data <- purrr::map2_dfr(fdr_images, output_covariates, returnFDR)
 #' Below are plots of the # of non-zero FDR corrected voxels for each covariate's nifti output:
-purrr::map2(fdr_images, output_covariates, plotFDR)
+fdr_data
+
+fdr_data %>%
+  ggplot(aes(x=Covariate, y = Freq)) +
+    geom_bar(aes(fill = Significant), stat = "identity") +
+    coord_flip() +
+    labs(title = "Number of Significant Voxels Per Covariate",
+         subtitle = "FDR Corrected Voxelwise GAM",
+         caption = "Model: CBF~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion")
