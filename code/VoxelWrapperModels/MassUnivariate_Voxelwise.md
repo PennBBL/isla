@@ -17,7 +17,7 @@ set.seed(1000)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 ```
 
-    ## [1] "Updated: 2019-01-31 "
+    ## [1] "Updated: 2019-02-01 "
 
 How to Run Voxelwise `gam()` with `voxelwrapper`
 ================================================
@@ -25,7 +25,7 @@ How to Run Voxelwise `gam()` with `voxelwrapper`
 Set up
 ------
 
-Here we demonstrate the multivariate voxelwise `gam()` for `CBF ~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion` for a small sample, using ISLA-corrected CBF data. We walk through the arguments of the voxelwrapper, creating each within this notebook.
+Here we demonstrate the multivariate voxelwise `gam()` for `CBF ~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion` for a small sample, using raw CBF data. We walk through the arguments of the voxelwrapper, creating each within this notebook.
 
 1.  `covariates`
 
@@ -144,33 +144,57 @@ Results
 The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's.
 
 ``` r
-#fdr_images <-
-#  list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-#  pattern = "fdr",
-#  full.names = TRUE) %>%
-#  lapply(., readNIfTI, reorient = FALSE)
+fdr_images <-
+  list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+  pattern = "fdr",
+  full.names = TRUE) %>%
+  lapply(., readNIfTI, reorient = FALSE)
 
-# output_covariates <- list.files("/data/jux/BBL/projects/isla/results/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-#                                pattern = "fdr") %>%
-#  str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
-#  .[,2] %>%
-#  str_replace(pattern = "sage", "s(age)") %>%
-#  str_replace(pattern = "and", " & ")
+output_covariates <- list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+                                pattern = "fdr") %>%
+  str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
+  .[,2] %>%
+  str_replace(pattern = "sage", "s(age)") %>%
+  str_replace(pattern = "and", " & ")
 
-#plotFDR <- function(nim, title) {
+plotFDR <- function(nim, title) {
 
-#  dat <- img_data(nim)
-#  table(dat != 0) %>%
-#    data.frame() %>%
-#    ggplot(aes(x = Var1, y = Freq)) +
-#    geom_col() +
-#    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
-#         x = "FDR != 0")
-#}
+  dat <- img_data(nim)
+  table(dat != 0) %>%
+    data.frame() %>%
+    ggplot(aes(x = Var1, y = Freq)) +
+    geom_col() +
+    labs(title = sprintf("# of Non-zero FDR Corrected Voxels for Covariate: %s", title),
+         x = "FDR != 0")
+}
 ```
 
 Below are plots of the \# of non-zero FDR corrected voxels for each covariate's nifti output:
 
 ``` r
-#purrr::map2(fdr_images, output_covariates, plotFDR)
+purrr::map2(fdr_images, output_covariates, plotFDR)
 ```
+
+    ## [[1]]
+
+![](MassUnivariate_Voxelwise_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+    ## 
+    ## [[2]]
+
+![](MassUnivariate_Voxelwise_files/figure-markdown_github/unnamed-chunk-12-2.png)
+
+    ## 
+    ## [[3]]
+
+![](MassUnivariate_Voxelwise_files/figure-markdown_github/unnamed-chunk-12-3.png)
+
+    ## 
+    ## [[4]]
+
+![](MassUnivariate_Voxelwise_files/figure-markdown_github/unnamed-chunk-12-4.png)
+
+    ## 
+    ## [[5]]
+
+![](MassUnivariate_Voxelwise_files/figure-markdown_github/unnamed-chunk-12-5.png)
