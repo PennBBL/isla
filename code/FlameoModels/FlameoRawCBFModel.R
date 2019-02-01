@@ -60,7 +60,7 @@ system(sprintf("Text2Vest /data/jux/BBL/projects/isla/data/sandbox/contrast.csv 
 
 mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
 
-#' Next, merge the nifti images using `fslmerge`. This will be a long string of the paths to the images.
+#' Next, merge the nifti images using `fslmerge`. The argument will be a long string of the paths to the images. Specifically, we write a file called `RunFlameo.sh` that we will call from the command line in `qsub`. Use a preamble to activate the correct environment
 
 imagePaths <-
   list.files("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf",
@@ -74,7 +74,14 @@ imagePaths <-
 toMerge <- paste(imagePaths$path, collapse = " ")
 
 copefile <- "/data/jux/BBL/projects/isla/data/sandbox/merged_raw_CBF.nii.gz"
-system(sprintf("fslmerge -t %s %s", copefile, toMerge), wait = TRUE)
+run_command <- sprintf("fslmerge -t %s %s", copefile, toMerge)
+
+write(c("unset PYTHONPATH; unalias python",
+             "export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH",
+             "source activate py2k",
+             run_command),
+           "/data/jux/BBL/projects/isla/code/qsub_Calls/RunFlameo.Sh",
+           append = FALSE)
 
 #' Finally, we write out the call to `RunFlameo.sh`
 
@@ -86,6 +93,4 @@ if(!dir.exists(output_dir)) {
 run_command <- sprintf("flameo --copefile=%s  --mask=%s  --dm=%s --tc=%s --cs=%s --runmode=flame1 --ld=%s",
                        copefile, mask, dm, tc, cs, output_dir)
 
-writeLines(c("unset PYTHONPATH; unalias python
-export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/RunFlameo.Sh")
+write(run_command, "/data/jux/BBL/projects/isla/code/qsub_Calls/RunFlameo.Sh", append = TRUE)
