@@ -8,10 +8,11 @@ sandbox
 .DS_Store
 Submit*
 
-# r specific files
+# program specific files
 .Rproj.user
 .Rhistory
 .Rapp.history
 .RData
 /*_cache/
 /cache/
+*.ipynb_checkpoints/

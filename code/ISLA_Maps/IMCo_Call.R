@@ -2,6 +2,7 @@
 #	 scanid
 #	 mask_location
 #	 neighborhood_size
+#	 modality
 
 args=commandArgs(trailingOnly=TRUE)
 bblid=as.numeric(as.character(args[1]))
@@ -9,7 +10,7 @@ scanid=as.numeric(as.character(args[2]))
 mask=as.character(args[3])
 nsize=as.numeric(as.character(args[5]))
 modality=as.character(args[4])
-print(paste0("Running imco with neighbourhood: ", nsize, ",\nBBLID: ", bblid, "\nScanID: ", scanid, ",\nMask: ", mask))
+print(paste0("Running imco with neighbourhood: ", nsize, ", BBLID: ", bblid, ", ScanID: ", scanid, ", Mask: ", mask))
 
 #load libraries
 packages=c("parrallel", "methods", "stringr", "fslr", "ANTsR", "extrantsr", "rlist", "dplyr", "imco")
@@ -49,6 +50,6 @@ mask=readnii(mask)
 print("mask read in successfully")
 
 #run imco
-makeDir=paste0("/home/ttapera/data/jux/BBL/projects/isla/data/imco1/gmd_", modality, "/", bblid)
+makeDir=paste0("/home/ttapera/data/jux/BBL/projects/isla/data/imco1/gmd_", modality, "/", bblid, "/")
 system2("mkdir", c("-p",makeDir))
 imco(files=list(Y_image,X_image), brainMask=mask, subMask=NULL, type="regression", ref=1, fwhm=3, thresh=0.005, radius=nsize, reverse=FALSE, verbose=TRUE, retimg=FALSE, outDir=makeDir)
