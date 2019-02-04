@@ -5,15 +5,15 @@ Tinashe M. Tapera
 
 ``` {.r}
 suppressPackageStartupMessages({
-  library(tidyr)
-  library(dplyr)
-  library(knitr)
-  library(ggplot2)
-  library(magrittr)
-  library(stringr)
-  library(oro.nifti)
-  library(purrr)
-  library(ggpubr)
+  library(tidyr, quietly = TRUE)
+  library(dplyr, quietly = TRUE)
+  library(knitr, quietly = TRUE)
+  library(ggplot2, quietly = TRUE)
+  library(magrittr, quietly = TRUE)
+  library(stringr, quietly = TRUE)
+  library(oro.nifti, quietly = TRUE)
+  library(purrr, quietly = TRUE)
+  library(ggpubr, quietly = TRUE)
 })
 ```
 
@@ -56,7 +56,12 @@ print(paste0("The mean GMD for this participant is ", round(mean(img_dat), 5)))
 
     ## [1] "The mean GMD for this participant is 0.0692"
 
-Use the `purrr` package to map this process. \# GMD\~CBF First, calculate means for CBF
+We'll use the `purrr` package to map this process.
+
+GMD\~CBF
+========
+
+First, calculate means for GMD
 
 ``` {.r}
 # get the sample
@@ -131,7 +136,10 @@ cbf_images %>%
 
 ![](CorrelationPlots_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
-Using the same method, we can calculate the correlation between GMD and Alff, and GMD and Reho \# GMD\~Alff
+Using the same method, we can calculate the correlation between GMD and Alff, and GMD and Reho
+
+GMD\~Alff
+=========
 
 ``` {.r}
 # get the sample
@@ -201,7 +209,8 @@ alff_images %>%
 
 ![](CorrelationPlots_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
-GMD\~Reho
+' GMD\~Reho
+===========
 
 ``` {.r}
 # read in the images

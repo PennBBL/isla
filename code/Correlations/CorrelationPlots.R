@@ -6,15 +6,15 @@
 
 #+ setup
 suppressPackageStartupMessages({
-  library(tidyr)
-  library(dplyr)
-  library(knitr)
-  library(ggplot2)
-  library(magrittr)
-  library(stringr)
-  library(oro.nifti)
-  library(purrr)
-  library(ggpubr)
+  library(tidyr, quietly = TRUE)
+  library(dplyr, quietly = TRUE)
+  library(knitr, quietly = TRUE)
+  library(ggplot2, quietly = TRUE)
+  library(magrittr, quietly = TRUE)
+  library(stringr, quietly = TRUE)
+  library(oro.nifti, quietly = TRUE)
+  library(purrr, quietly = TRUE)
+  library(ggpubr, quietly = TRUE)
 })
 set.seed(1000)
 SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
@@ -32,11 +32,11 @@ gmd_example <-
 img_dat <- img_data(gmd_example)
 print(paste0("The mean GMD for this participant is ", round(mean(img_dat), 5)))
 
-#' Use the `purrr` package to map this process.
-
+#' We'll use the `purrr` package to map this process.
+#'
 #' # GMD~CBF
-
-#' First, calculate means for CBF
+#'
+#' First, calculate means for GMD
 # get the sample
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
@@ -102,8 +102,9 @@ cbf_images %>%
 
 
 #' Using the same method, we can calculate the correlation between GMD and Alff, and GMD and Reho
+#'
 #' # GMD~Alff
-
+#'
 # get the sample
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
@@ -164,7 +165,7 @@ alff_images %>%
     labs(title = "Correlation Between GMD and Alff per Participant") +
     NULL
 
-#' GMD~Reho
+#' #' GMD~Reho
 # read in the images
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
 
