@@ -4,7 +4,7 @@
 #' date: "2018-02-05"
 #' ---
 
-#+ setup
+#+ setup, warning = FALSE
 suppressPackageStartupMessages({
   library(tidyr, quietly = TRUE)
   library(dplyr, quietly = TRUE)
@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
   library(ggpubr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. We append to the previous work by calculating spatial correlation per participant and then plotting the distribution of these correlation coefficients. First, how to load the images and calculate spatial correlation.
 #+ demo
@@ -240,9 +240,21 @@ df %>%
     labs(
       title = "Distribution of Correlation Coefficients",
       subtitle = "Spatial Correlation Between GMD and Outcome Variable",
-      x = expression(italic("r")))
+      x = expression(italic("r"))
+    )
+df %>%
+  ggplot(aes(x = variables, y = cor_coef)) +
+    geom_boxplot(aes(fill = variables)) +
+    guides(fill = FALSE) +
+    labs(
+      title = "Boxplots of Correlation Coefficients",
+      subtitle = "Spatial Correlation Between GMD and Outcome Variable",
+      y = expression(italic("r"))
+    ) +
+    theme_minimal() +
+    coord_flip() +
+    NULL
 
-#' ---
 #' Session info:
 print(R.version.string)
 print(paste("Last Run:", format(Sys.time(), "%Y-%m-%d")))
