@@ -75,7 +75,7 @@ calculate_spatial_corr(cbf_example$path, gmd_example$path, mask_path)
 #' # GMD~CBF
 #'
 #' We calculate the spatial correlation per participant between GMD and CBF.
-#+ prep
+#+ prep cbf
 # use the cbf sample
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
@@ -115,7 +115,7 @@ gmd_cbf <- cbf_images %>%
   )
 
 #' ## Plot
-#+ plot
+#+ plot cbf
 gmd_cbf %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
@@ -129,7 +129,7 @@ gmd_cbf %>%
 #' # GMD~Alff
 #'
 #' Now the correlation between GMD and Alff
-#+ prep
+#+ prep alff
 # use the rest sample
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
@@ -171,7 +171,7 @@ gmd_alff <- alff_images %>%
   )
 
 #' ## Plot
-#+ plot
+#+ plot alff
 gmd_alff %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
@@ -185,7 +185,7 @@ gmd_alff %>%
 #' # GMD~Reho
 #'
 #' Finally, the correlation between GMD and Reho
-#+ prep
+#+ prep reho
 # gather images
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
 
@@ -211,7 +211,7 @@ gmd_reho <- reho_images %>%
   )
 
 #' ## Plot
-#+ plot
+#+ plot reho
 gmd_reho %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
