@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
   library(ggpubr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. To start, a demonstration of how to create mean measures from NIfTI images.
 
@@ -40,7 +40,7 @@ print(paste0("The mean GMD for this participant is ", round(mean(img_dat), 5)))
 # get the sample
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) } %>%
+  { if( SAMPLE ) sample_n(., 50) else .} %>%
   {.}
 
 # read in the images
@@ -57,7 +57,7 @@ gmd_images <-
 # calculate means
 gmd_images <- gmd_images %>%
   mutate(
-    mean_gmd = map(nifti, .f = function(img){
+    mean_gmd = purrr::map(nifti, .f = function(img){
       dat <- img_data(img)
       return(mean(dat))
     })) %>%
@@ -108,7 +108,7 @@ cbf_images %>%
 # get the sample
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) } %>%
+  { if( SAMPLE ) sample_n(., 50) else .} %>%
   {.}
 # read in the images
 gmd_images <-
@@ -165,7 +165,7 @@ alff_images %>%
     labs(title = "Correlation Between GMD and Alff per Participant") +
     NULL
 
-#' #' GMD~Reho
+#' # GMD~Reho
 # read in the images
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
 
@@ -199,6 +199,8 @@ reho_images %>%
     theme_minimal() +
     labs(title = "Correlation Between GMD and Reho per Participant") +
     NULL
-#' Done! Session info:
+#' Done! 
+---
+#' Session info:
 print(R.version.string)
 print(paste("Updated:", format(Sys.time(), "%Y-%m-%d")))
