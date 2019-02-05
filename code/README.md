@@ -13,3 +13,5 @@ To create the full dataset of ISLA coupling maps with the new `imco` package, se
 To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](VoxelWrapperModels/MassUnivariate_Regional.md)
 
 To run voxelwise GAM model on raw CBF see: [Mass Univariate Voxelwise GAM notebook](VoxelWrapperModels/MassUnivariate_Voxelwise.md)
+
+See the [Correlations](Correlations/) directory for notebooks with plots of correlations.
