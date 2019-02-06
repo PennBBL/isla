@@ -3,7 +3,7 @@ Spatial Correlation Density Plots
 Tinashe M. Tapera
 2018-02-05
 
-``` {.r}
+``` r
 suppressPackageStartupMessages({
   library(tidyr, quietly = TRUE)
   library(dplyr, quietly = TRUE)
@@ -15,25 +15,8 @@ suppressPackageStartupMessages({
   library(purrr, quietly = TRUE)
   library(ggpubr, quietly = TRUE)
 })
-```
-
-    ## Warning in .doLoadActions(where, attach): trying to execute load actions
-    ## without 'methods' package
-
-    ## Warning: replacing previous import by 'methods::slot<-' when loading
-    ## 'oro.nifti'
-
-    ## Warning: replacing previous import by 'methods::as' when loading
-    ## 'oro.nifti'
-
-    ## Warning: replacing previous import by 'methods::slotNames' when loading
-    ## 'oro.nifti'
-
-    ## Warning: package 'ggpubr' was built under R version 3.4.1
-
-``` {.r}
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 ```
 
 Introduction
@@ -41,7 +24,7 @@ Introduction
 
 Here we visualise the relationship between GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. We append to the previous work by calculating spatial correlation per participant and then plotting the distribution of these correlation coefficients. First, how to load the images and calculate spatial correlation.
 
-``` {.r}
+``` r
 # relevant paths
 gmd_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd")
 cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
@@ -69,7 +52,7 @@ cbf_example <-
 
 Here we use the script `spatialcorr.sh` to calculate the spatial correlation for a participant's two images.
 
-``` {.r}
+``` r
 spatial_corr_script <- "/data/jux/BBL/projects/isla/code/Correlations/spatialcorr.sh"
 system(sprintf("%s %s %s %s",
   spatial_corr_script,
@@ -83,7 +66,7 @@ system(sprintf("%s %s %s %s",
 
 We can wrap this in an internal function like so:
 
-``` {.r}
+``` r
 calculate_spatial_corr <- function(img1_path, img2_path, mask_path){
 
   spatial_corr_script <- "/data/jux/BBL/projects/isla/code/Correlations/spatialcorr.sh"
@@ -103,12 +86,12 @@ calculate_spatial_corr(cbf_example$path, gmd_example$path, mask_path)
 
     ## [1] 0.2599
 
-GMD\~CBF
-========
+GMD~CBF
+=======
 
 We calculate the spatial correlation per participant between GMD and CBF.
 
-``` {.r}
+``` r
 # use the cbf sample
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
@@ -151,7 +134,7 @@ gmd_cbf <- cbf_images %>%
 Plot
 ----
 
-``` {.r}
+``` r
 gmd_cbf %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
@@ -167,12 +150,12 @@ gmd_cbf %>%
 
 ![](DensityPlots_files/figure-markdown_github/plot%20cbf-1.png)
 
-GMD\~Alff
-=========
+GMD~Alff
+========
 
 Now the correlation between GMD and Alff
 
-``` {.r}
+``` r
 # use the rest sample
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
@@ -217,7 +200,7 @@ gmd_alff <- alff_images %>%
 Plot
 ----
 
-``` {.r}
+``` r
 gmd_alff %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
@@ -233,12 +216,12 @@ gmd_alff %>%
 
 ![](DensityPlots_files/figure-markdown_github/plot%20alff-1.png)
 
-GMD\~Reho
-=========
+GMD~Reho
+========
 
 Finally, the correlation between GMD and Reho
 
-``` {.r}
+``` r
 # gather images
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
 
@@ -267,7 +250,7 @@ gmd_reho <- reho_images %>%
 Plot
 ----
 
-``` {.r}
+``` r
 gmd_reho %>%
   ggplot(aes(cor_coef)) +
     geom_histogram() +
@@ -288,7 +271,7 @@ Overlayed Plot
 
 Now, for comparison, we can overlay the coefficient distributions to see if there are any differences between them.
 
-``` {.r}
+``` r
 gmd_cbf <- gmd_cbf %>%
   mutate(variables = "CBF")
 gmd_alff <- gmd_alff %>%
@@ -305,9 +288,39 @@ df %>%
     labs(
       title = "Distribution of Correlation Coefficients",
       subtitle = "Spatial Correlation Between GMD and Outcome Variable",
-      x = expression(italic("r")))
+      x = expression(italic("r"))
+    )
 ```
 
 ![](DensityPlots_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
-title: "DensityPlots.R" author: "ttapera" date: "Tue Feb 5 16:41:07 2019" ---
+``` r
+df %>%
+  ggplot(aes(x = variables, y = cor_coef)) +
+    geom_boxplot(aes(fill = variables)) +
+    guides(fill = FALSE) +
+    labs(
+      title = "Boxplots of Correlation Coefficients",
+      subtitle = "Spatial Correlation Between GMD and Outcome Variable",
+      y = expression(italic("r"))
+    ) +
+    theme_minimal() +
+    coord_flip() +
+    NULL
+```
+
+![](DensityPlots_files/figure-markdown_github/unnamed-chunk-2-2.png)
+
+Session info:
+
+``` r
+print(R.version.string)
+```
+
+    ## [1] "R version 3.4.1 (2017-06-30)"
+
+``` r
+print(paste("Last Run:", format(Sys.time(), "%Y-%m-%d")))
+```
+
+    ## [1] "Last Run: 2019-02-05"
