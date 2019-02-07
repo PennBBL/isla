@@ -15,23 +15,68 @@ suppressPackageStartupMessages({
   library(oro.nifti, quietly = TRUE)
   library(purrr, quietly = TRUE)
   library(ggpubr, quietly = TRUE)
+  library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
-#' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. To start, a demonstration of how to create mean measures from NIfTI images.
+#' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between one participant's GMD and CBF measures.
 
-gmd_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd"
+gmd_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd")
+mask_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
+cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
 
+# one gmd image
 gmd_example <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
-    full.names = TRUE) [1] %>%
-  readNIfTI(.)
+    full.names = TRUE)[2] %>%
+  tibble(path = .) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
+  select(scanid, everything())
 
-img_dat <- img_data(gmd_example)
-print(paste0("The mean GMD for this participant is ", round(mean(img_dat), 5)))
+# the same scanid's cbf image
+cbf_example <-
+  list.files(cbf_path,
+    pattern = regex("[^tmp.nii.gz]"),
+    full.names = TRUE) %>%
+  tibble(path = .) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
+  select(scanid, everything()) %>%
+  filter(scanid == gmd_example$scanid)
 
+#' Using `fslr`, we spatial correlation is calculated by first masking and merging two images, and then finding the mean.
+
+masked1 <- fslmask(
+  cbf_example$path,
+  mask = mask_path,
+  retimg = TRUE
+)
+
+masked2 <- fslmask(
+  gmd_example$path,
+  mask = mask_path,
+  retimg = TRUE
+)
+
+merged <- fslmerge(
+  masked1,
+  masked2,
+  direction = c("t"),
+  retimg = TRUE
+)
+
+merged_mean <- fslmaths(
+  merged,
+  opts = c("-Tmean"),
+  retimg = TRUE
+)
+
+#' We can plot the image data like so:
+
+dat <- img_data(merged_mean)
+
+str(dat)
 #' We'll use the `purrr` package to map this process.
 #'
 #' # GMD~CBF
@@ -199,7 +244,7 @@ reho_images %>%
     theme_minimal() +
     labs(title = "Correlation Between GMD and Reho per Participant") +
     NULL
-#' Done! 
+#' Done!
 ---
 #' Session info:
 print(R.version.string)
