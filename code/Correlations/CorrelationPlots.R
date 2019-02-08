@@ -104,7 +104,7 @@ df %>%
 #' We specify the sample here:
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) else .}
+  { if( SAMPLE ) sample_n(., 5) else .}
 
 #' And read in the images:
 gmd_images <-
@@ -154,7 +154,7 @@ df %>%
 #' We specify the sample, image paths, and mask here:
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) else .}
+  { if( SAMPLE ) sample_n(., 5) else .}
 
 alff_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff"
 mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
