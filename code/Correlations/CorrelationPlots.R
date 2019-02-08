@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
@@ -49,13 +49,13 @@ cbf_example <-
 pcasl_mask <- readNIfTI(mask_path)
 gmd_example <- gmd_example %>%
   mutate(nifti = fsl_mask(path, mask = pcasl_mask))
-cbf_example <- cbf_example %>%
+str(cbf_example) <- cbf_example %>%
   mutate(nifti = fsl_mask(path, mask = pcasl_mask))
 
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
   fslmerge(
-    pull(cbf_example, nifti),
+    cbf_example$path,
     direction = c("t"),
     retimg = TRUE
   )
@@ -63,7 +63,7 @@ merged_cbf <-
 #' And the GMD into one volume:
 merged_gmd <-
   fslmerge(
-    pull(gmd_example, nifti),
+    gmd_example$path,
     direction = c("t"),
     retimg = TRUE
   )
@@ -75,9 +75,9 @@ mean_gmd <- fslmaths(merged_gmd, opts = "-Tmean")
 
 #' From here, we can extract the data from the images and plot it:
 cbf_dat <- img_data(mean_cbf) %>%
-  as.vector(.)
+  .[pcasl_mask != 0]
 gmd_dat <- img_data(mean_gmd) %>%
-  as.vector(.)
+  .[pcasl_mask != 0]
 
 df <- data_frame(cbf_dat, gmd_dat)
 df %>%
@@ -112,22 +112,17 @@ cbf_images <-
   filter(scanid %in% cbf_sample$scanid) %>%
   select(scanid, everything())
 
-read_and_load <- function(path){
+read_and_load <- function(path, mask){
 
   dat <- readNIfTI(path)
   dat <- img_data(dat)
 
-  as.vector(dat)
+  dat[mask != 0]
 
 }
 
-#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+#' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
-  mutate_at(
-    .vars = vars(contains("path")),
-    .funs = fsl_mask,
-    mask = pcasl_mask
-  ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
@@ -141,8 +136,8 @@ df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
 
 df2 <-
   data_frame(
-    V1 = read_and_load(df$path.x),
-    V2 = read_and_load(df$path.y)
+    V1 = read_and_load(df$path.x, pcasl_mask),
+    V2 = read_and_load(df$path.y, pcasl_mask)
   )
 
 
@@ -189,13 +184,8 @@ alff_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
-#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+#' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, alff_images, by = "scanid") %>%
-  mutate_at(
-    .vars = vars(contains("path")),
-    .funs = fsl_mask,
-    mask = rest_mask
-  ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
@@ -209,8 +199,8 @@ df <- left_join(gmd_images, alff_images, by = "scanid") %>%
 
 df2 <-
   data_frame(
-    V1 = read_and_load(df$path.x),
-    V2 = read_and_load(df$path.y)
+    V1 = read_and_load(df$path.x, rest_mask),
+    V2 = read_and_load(df$path.y, rest_mask)
   )
 
 
@@ -244,11 +234,6 @@ reho_images <-
 
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
 df <- left_join(gmd_images, reho_images, by = "scanid") %>%
-  mutate_at(
-    .vars = vars(contains("path")),
-    .funs = fsl_mask,
-    mask = rest_mask
-  ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
@@ -262,8 +247,8 @@ df <- left_join(gmd_images, reho_images, by = "scanid") %>%
 
 df2 <-
   data_frame(
-    V1 = read_and_load(df$path.x),
-    V2 = read_and_load(df$path.y)
+    V1 = read_and_load(df$path.x, rest_mask),
+    V2 = read_and_load(df$path.y, rest_mask)
   )
 
 
