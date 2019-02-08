@@ -18,15 +18,15 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
-#' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between one participant's GMD and CBF measures.
+#' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
 gmd_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd")
 mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
 cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
 
-# one gmd image
+# two gmd images
 gmd_example <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
@@ -35,7 +35,7 @@ gmd_example <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   select(scanid, everything())
 
-# the same scanid's cbf image
+# the same scanid's cbf images
 cbf_example <-
   list.files(cbf_path,
     pattern = regex("[^tmp.nii.gz]"),
@@ -47,55 +47,42 @@ cbf_example <-
 
 # the mask for this sample
 pcasl_mask <- readNIfTI(mask_path)
+gmd_example <- gmd_example %>%
+  mutate(nifti = fsl_mask(path, mask = pcasl_mask))
+cbf_example <- cbf_example %>%
+  mutate(nifti = fsl_mask(path, mask = pcasl_mask))
 
-#' Here's a helper function to read in two images from a participant, parse the voxelwise data, mask it, and return the data as two separate vectors (corresponding to the unraveled voxel matrix for image 1 and image 2 respectively).
-read_and_load <- function(img_path1, img_path2, mask_img){
+#' Next we use `fslmerge` to merge the CBF images into one volume:
+merged_cbf <-
+  fslmerge(
+    pull(cbf_example, nifti),
+    direction = c("t"),
+    retimg = TRUE
+  )
 
-  dat1 <- readNIfTI(img_path1)
-  dat1 <- img_data(dat1)
-  dat1 <- dat1[mask_img ==1]
+#' And the GMD into one volume:
+merged_gmd <-
+  fslmerge(
+    pull(gmd_example, nifti),
+    direction = c("t"),
+    retimg = TRUE
+  )
 
-  dat2 <- readNIfTI(img_path2)
-  dat2 <- img_data(dat2)
-  dat2 <- dat2[mask_img ==1]
+#' Then we calculate the mean values using `fslmaths`
 
-  data_frame(V1 = dat1, V2 = dat2)
-}
+mean_cbf <- fslmaths(merged_cbf, opts = "-Tmean")
+mean_gmd <- fslmaths(merged_gmd, opts = "-Tmean")
 
-df <- left_join(cbf_example, gmd_example, by = "scanid") %>%
-  mutate(niftis = map2(
-    .x = path.x,
-    .y = path.y,
-    read_and_load,
-    mask_img  = pcasl_mask
-    )
-  ) %>%
-  unnest(niftis)
+#' From here, we can extract the data from the images and plot it:
+cbf_dat <- img_data(mean_cbf) %>%
+  as.vector(.)
+gmd_dat <- img_data(mean_gmd) %>%
+  as.vector(.)
 
-#' Thus, we have this dataframe:
-df %>% select(V1, V2, scanid) %>% dplyr::slice(1:10) %>% kable()
-
-#' Which we can plot like so:
+df <- data_frame(cbf_dat, gmd_dat)
 df %>%
-  ggplot(aes(x = V1, y = V2)) +
-    geom_point(aes(color = scanid), alpha = 0.2) +
-    labs(
-      x = "CBF",
-      y = "GMD",
-      title = "Voxelwise GMD & CBF"
-    )
-
-#' But as we add more participants, we will need high density plotting methods, which will consequently look like this:
-df %>%
-  ggplot(aes(x = V1, y = V2))+
-  geom_hex() +
-  labs(
-    x = "CBF",
-    y = "GMD",
-    title = "Voxelwise GMD & CBF",
-    caption = "Spearman Correlation Shown"
-  ) +
-  stat_cor(method = "spearman")
+  ggplot(aes(x = cbf_dat, y = gmd_dat)) +
+    geom_hex()
 
 #' Looks good!
 #'
@@ -125,20 +112,43 @@ cbf_images <-
   filter(scanid %in% cbf_sample$scanid) %>%
   select(scanid, everything())
 
-#' Join paths and get the voxel data:
-df <- left_join(cbf_images, gmd_images, by = "scanid") %>%
-  mutate(niftis = map2(
-    .x = path.x,
-    .y = path.y,
-    read_and_load,
-    mask_img  = pcasl_mask
-    )
+read_and_load <- function(path){
+
+  dat <- readNIfTI(path)
+  dat <- img_data(dat)
+
+  as.vector(dat)
+
+}
+
+#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
+  mutate_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_mask,
+    mask = pcasl_mask
   ) %>%
-  unnest(niftis)
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_merge,
+    direction = c("t")
+  ) %>%
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_maths,
+    opts = c("-Tmean")
+  )
+
+df2 <-
+  data_frame(
+    V1 = read_and_load(df$path.x),
+    V2 = read_and_load(df$path.y)
+  )
+
 
 #' And plot:
-df %>%
-  ggplot(aes(x = V1, y = V2))+
+df2 %>%
+  ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
   labs(
     x = "CBF",
@@ -179,20 +189,34 @@ alff_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
-#' Join paths and get the voxel data:
-df <- left_join(alff_images, gmd_images, by = "scanid") %>%
-  mutate(niftis = map2(
-    .x = path.x,
-    .y = path.y,
-    read_and_load,
-    mask_img  = rest_mask
-    )
+#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+df <- left_join(gmd_images, alff_images, by = "scanid") %>%
+  mutate_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_mask,
+    mask = rest_mask
   ) %>%
-  unnest(niftis)
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_merge,
+    direction = c("t")
+  ) %>%
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_maths,
+    opts = c("-Tmean")
+  )
+
+df2 <-
+  data_frame(
+    V1 = read_and_load(df$path.x),
+    V2 = read_and_load(df$path.y)
+  )
+
 
 #' And plot:
-df %>%
-  ggplot(aes(x = V1, y = V2))+
+df2 %>%
+  ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
   labs(
     x = "Alff",
@@ -218,20 +242,34 @@ reho_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
-#' Join paths and get the voxel data:
-df <- left_join(reho_images, gmd_images, by = "scanid") %>%
-  mutate(niftis = map2(
-    .x = path.x,
-    .y = path.y,
-    read_and_load,
-    mask_img  = rest_mask
-    )
+#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+df <- left_join(gmd_images, reho_images, by = "scanid") %>%
+  mutate_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_mask,
+    mask = rest_mask
   ) %>%
-  unnest(niftis)
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_merge,
+    direction = c("t")
+  ) %>%
+  summarise_at(
+    .vars = vars(contains("path")),
+    .funs = fsl_maths,
+    opts = c("-Tmean")
+  )
+
+df2 <-
+  data_frame(
+    V1 = read_and_load(df$path.x),
+    V2 = read_and_load(df$path.y)
+  )
+
 
 #' And plot:
-df %>%
-  ggplot(aes(x = V1, y = V2))+
+df2 %>%
+  ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
   labs(
     x = "Reho",
