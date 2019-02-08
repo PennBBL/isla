@@ -23,14 +23,14 @@ SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between one participant's GMD and CBF measures.
 
 gmd_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd")
-mask_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
+mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
 cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
 
 # one gmd image
 gmd_example <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
-    full.names = TRUE)[2] %>%
+    full.names = TRUE)[1:2] %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   select(scanid, everything())
@@ -45,74 +45,76 @@ cbf_example <-
   select(scanid, everything()) %>%
   filter(scanid == gmd_example$scanid)
 
-#' Using `fslr`, we spatial correlation is calculated by first masking and merging two images, and then finding the mean.
+# the mask for this sample
+pcasl_mask <- readNIfTI(mask_path)
 
-masked1 <- fslmask(
-  cbf_example$path,
-  mask = mask_path,
-  retimg = TRUE
-)
+#' Here's a helper function to read in two images from a participant, parse the voxelwise data, mask it, and return the data as two separate vectors (corresponding to the unraveled voxel matrix for image 1 and image 2 respectively).
+read_and_load <- function(img_path1, img_path2, mask_img){
 
-masked2 <- fslmask(
-  gmd_example$path,
-  mask = mask_path,
-  retimg = TRUE
-)
+  dat1 <- readNIfTI(img_path1)
+  dat1 <- img_data(dat1)
+  dat1 <- dat1[mask_img ==1]
 
-merged <- fslmerge(
-  masked1,
-  masked2,
-  direction = c("t"),
-  retimg = TRUE
-)
+  dat2 <- readNIfTI(img_path2)
+  dat2 <- img_data(dat2)
+  dat2 <- dat2[mask_img ==1]
 
-merged_mean <- fslmaths(
-  merged,
-  opts = c("-Tmean"),
-  retimg = TRUE
-)
+  data_frame(V1 = dat1, V2 = dat2)
+}
 
-#' We can plot the image data like so:
+df <- left_join(cbf_example, gmd_example, by = "scanid") %>%
+  mutate(niftis = map2(
+    .x = path.x,
+    .y = path.y,
+    read_and_load,
+    mask_img  = pcasl_mask
+    )
+  ) %>%
+  unnest(niftis)
 
-dat <- img_data(merged_mean)
+#' Thus, we have this dataframe:
+df %>% select(V1, V2, scanid) %>% dplyr::slice(1:10) %>% kable()
 
-str(dat)
-#' We'll use the `purrr` package to map this process.
+#' Which we can plot like so:
+df %>%
+  ggplot(aes(x = V1, y = V2)) +
+    geom_point(aes(color = scanid), alpha = 0.2) +
+    labs(
+      x = "CBF",
+      y = "GMD",
+      title = "Voxelwise GMD & CBF"
+    )
+
+#' But as we add more participants, we will need high density plotting methods, which will consequently look like this:
+df %>%
+  ggplot(aes(x = V1, y = V2))+
+  geom_hex() +
+  labs(
+    x = "CBF",
+    y = "GMD",
+    title = "Voxelwise GMD & CBF",
+    caption = "Spearman Correlation Shown"
+  ) +
+  stat_cor(method = "spearman")
+
+#' Looks good!
 #'
 #' # GMD~CBF
 #'
-#' First, calculate means for GMD
-# get the sample
+#' We specify the sample here:
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) else .} %>%
-  {.}
+  { if( SAMPLE ) sample_n(., 50) else .}
 
-# read in the images
+#' And read in the images:
 gmd_images <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
     full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
-  select(scanid, everything()) %>%
   filter(scanid %in% cbf_sample$scanid) %>%
-  mutate(nifti = map(.x = path, .f = readNIfTI))
-
-# calculate means
-gmd_images <- gmd_images %>%
-  mutate(
-    mean_gmd = purrr::map(nifti, .f = function(img){
-      dat <- img_data(img)
-      return(mean(dat))
-    })) %>%
-  select(-nifti) %>%
-  unnest()
-
-#' And then do the same for CBF
-
-# read in the images
-cbf_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf"
+  select(scanid, everything())
 
 cbf_images <-
   list.files(cbf_path,
@@ -120,64 +122,53 @@ cbf_images <-
     full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
-  select(scanid, everything()) %>%
   filter(scanid %in% cbf_sample$scanid) %>%
-  mutate(nifti = map(.x = path, .f = readNIfTI))
+  select(scanid, everything())
 
-# calculate means
-cbf_images <- cbf_images %>%
-  mutate(
-    mean_cbf = map(nifti, .f = function(img){
-      dat <- img_data(img)
-      return(mean(dat))
-    })) %>%
-  select(-nifti) %>%
-  unnest()
-#' Now, join the means and plot
-cbf_images %>%
-  left_join(gmd_images, by = "scanid") %>%
-  select(mean_gmd, mean_cbf) %>%
-  ggplot(., aes(x = mean_gmd, y = mean_cbf)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    stat_cor(method = "pearson") +
-    theme_minimal() +
-    labs(title = "Correlation Between GMD and CBF per Participant") +
-    NULL
+#' Join paths and get the voxel data:
+df <- left_join(cbf_images, gmd_images, by = "scanid") %>%
+  mutate(niftis = map2(
+    .x = path.x,
+    .y = path.y,
+    read_and_load,
+    mask_img  = pcasl_mask
+    )
+  ) %>%
+  unnest(niftis)
 
+#' And plot:
+df %>%
+  ggplot(aes(x = V1, y = V2))+
+  geom_hex() +
+  labs(
+    x = "CBF",
+    y = "GMD",
+    title = "Voxelwise GMD & CBF",
+    caption = "Spearman Correlation Shown"
+  ) +
+  stat_cor(method = "spearman") +
+  theme_minimal()
 
-#' Using the same method, we can calculate the correlation between GMD and Alff, and GMD and Reho
-#'
 #' # GMD~Alff
 #'
-# get the sample
+#' We specify the sample, image paths, and mask here:
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 50) else .} %>%
-  {.}
-# read in the images
+  { if( SAMPLE ) sample_n(., 50) else .}
+
+alff_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff"
+mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
+rest_mask <- readNIfTI(mask_path)
+
+#' And read in the images:
 gmd_images <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
     full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
-  select(scanid, everything()) %>%
   filter(scanid %in% rest_sample$scanid) %>%
-  mutate(nifti = map(.x = path, .f = readNIfTI))
-
-# calculate means
-gmd_images <- gmd_images %>%
-  mutate(
-    mean_gmd = map(nifti, .f = function(img){
-      dat <- img_data(img)
-      return(mean(dat))
-    })) %>%
-  select(-nifti) %>%
-  unnest()
-
-# read in the images
-alff_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff"
+  select(scanid, everything())
 
 alff_images <-
   list.files(alff_path,
@@ -185,65 +176,72 @@ alff_images <-
     full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
-  select(scanid, everything()) %>%
   filter(scanid %in% rest_sample$scanid) %>%
-  mutate(nifti = map(.x = path, .f = readNIfTI))
+  select(scanid, everything())
 
-# calculate means
-alff_images <- alff_images %>%
-  mutate(
-    mean_alff = map(nifti, .f = function(img){
-      dat <- img_data(img)
-      return(mean(dat))
-    })) %>%
-  select(-nifti) %>%
-  unnest()
-#' Now, join the means and plot
-alff_images %>%
-  left_join(gmd_images, by = "scanid") %>%
-  select(mean_gmd, mean_alff) %>%
-  ggplot(aes(x = mean_gmd, y= mean_alff)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    stat_cor(method = "pearson") +
-    theme_minimal() +
-    labs(title = "Correlation Between GMD and Alff per Participant") +
-    NULL
+#' Join paths and get the voxel data:
+df <- left_join(alff_images, gmd_images, by = "scanid") %>%
+  mutate(niftis = map2(
+    .x = path.x,
+    .y = path.y,
+    read_and_load,
+    mask_img  = rest_mask
+    )
+  ) %>%
+  unnest(niftis)
+
+#' And plot:
+df %>%
+  ggplot(aes(x = V1, y = V2))+
+  geom_hex() +
+  labs(
+    x = "Alff",
+    y = "GMD",
+    title = "Voxelwise GMD & Alff",
+    caption = "Spearman Correlation Shown"
+  ) +
+  stat_cor(method = "spearman") +
+  theme_minimal()
 
 #' # GMD~Reho
-# read in the images
+#'
+#' Sample and mask are already specified, we just need the path to `reho` images:
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
 
+#' And read in the images (`gmd` is already specified):
 reho_images <-
   list.files(reho_path,
     pattern = regex("[^tmp.nii.gz]"),
     full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
-  select(scanid, everything()) %>%
   filter(scanid %in% rest_sample$scanid) %>%
-  mutate(nifti = map(.x = path, .f = readNIfTI))
+  select(scanid, everything())
 
-# calculate means
-reho_images <- reho_images %>%
-  mutate(
-    mean_reho = map(nifti, .f = function(img){
-      dat <- img_data(img)
-      return(mean(dat))
-    })) %>%
-  select(-nifti) %>%
-  unnest()
-#' Now, join the means and plot
-reho_images %>%
-  left_join(gmd_images, by = "scanid") %>%
-  select(mean_gmd, mean_reho) %>%
-  ggplot(aes(x = mean_gmd, y= mean_reho)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    stat_cor(method = "pearson") +
-    theme_minimal() +
-    labs(title = "Correlation Between GMD and Reho per Participant") +
-    NULL
+#' Join paths and get the voxel data:
+df <- left_join(reho_images, gmd_images, by = "scanid") %>%
+  mutate(niftis = map2(
+    .x = path.x,
+    .y = path.y,
+    read_and_load,
+    mask_img  = rest_mask
+    )
+  ) %>%
+  unnest(niftis)
+
+#' And plot:
+df %>%
+  ggplot(aes(x = V1, y = V2))+
+  geom_hex() +
+  labs(
+    x = "Reho",
+    y = "GMD",
+    title = "Voxelwise GMD & Reho",
+    caption = "Spearman Correlation Shown"
+  ) +
+  stat_cor(method = "spearman") +
+  theme_minimal()
+
 #' Done!
 ---
 #' Session info:
