@@ -134,7 +134,7 @@ system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/cod
 
 #' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's. First, read in the NIfTI outputs and mask:
 fdr_images <-
-  list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+  list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
   pattern = "fdr",
   full.names = TRUE) %>%
   lapply(., readNIfTI, reorient = FALSE)
@@ -144,7 +144,7 @@ maskdat <- img_data(mask_img)
 
 #' Also grab a list of the covariates:
 
-output_covariates <- list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+output_covariates <- list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
                                 pattern = "fdr") %>%
   str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
   .[,2] %>%

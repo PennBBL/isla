@@ -17,7 +17,12 @@ set.seed(1000)
 print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
 ```
 
-    ## [1] "Updated: 2019-02-01 "
+    ## [1] "Updated: 2019-02-07 "
+
+``` r
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
+SIZE <- 3 # the size parameter for the ISLA image (3 or 4)
+```
 
 How to Run Voxelwise `gam()` with `voxelwrapper`
 ================================================
@@ -27,7 +32,7 @@ Set up
 
 Here we demonstrate the multivariate voxelwise `gam()` for `CBF ~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion` for a small sample, using raw CBF data. We walk through the arguments of the voxelwrapper, creating each within this notebook.
 
-1.  `covariates`
+`covariates`
 
 Here we read in the demographic data and the paths to the CBF images, and write this out to an RDS file in the sandbox:
 
@@ -35,11 +40,14 @@ Here we read in the demographic data and the paths to the CBF images, and write 
 demographics <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/demographics/n1601_demographics_go1_20161212.csv") %>%
   as_tibble() %>%
-  mutate(sex = as.ordered(as.factor(sex)),
-         age = ageAtScan1 / 12,
-         scanid = as.character(scanid))
+  mutate(
+    sex = as.ordered(as.factor(sex)),
+    age = ageAtScan1 / 12,
+    scanid = as.character(scanid)
+  ) %>%
+  select(scanid, sex, age)
 
-CBF_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
+cbf_path <- file.path("/data/jux/BBL/projects/isla/data/imco1/gmd_cbf")
 
 cbfMotion <-
   read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/n1601_PcaslQaData_20170403.csv") %>%
@@ -47,9 +55,11 @@ cbfMotion <-
   mutate(scanid = as.character(scanid))
 
 all_scans <-
-  list.files(CBF_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
+  list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
-  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
+  mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
+  filter(str_detect(path, paste0("isla_diff_vox", SIZE))) %>%
+  { if ( SAMPLE ) sample_n(., 30) else .} %>%
   select(scanid, everything())
 
 covariates_df <-
@@ -57,7 +67,6 @@ covariates_df <-
   left_join(demographics, by = "scanid") %>%
   left_join(cbfMotion, by = "scanid") %>%
   mutate(include = 1) %>%  # for inclusion critera
-  filter(scanid != 4445) %>% #broken nifti for this scanID
   filter(complete.cases(.))
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
@@ -77,7 +86,7 @@ head(covariates_df) %>% kable()
 `output` Quickly assign an output directory
 
 ``` r
-output <- file.path("/data/jux/BBL/projects/isla/results/")
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/", "cbf_", SIZE))
 ```
 
 `imagepaths` Next we find the voxelwise CBF data, and create a spreadsheet of input paths:
@@ -89,7 +98,7 @@ image_paths <- "path"
 `mask` Set the path to the mask image
 
 ``` r
-mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
+mask <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
 ```
 
 `smoothing` The smoothing in sigmas required for the fourd image. Recommended default to 0
@@ -127,15 +136,25 @@ The remaining arguments, `splits`, `residual`, and `numberofcores`, `skipfourD`,
 Running the Model
 -----------------
 
-We will call the voxelwrapper from outside the command line like so:
+We will call the voxelwrapper from outside the command line with a `qsub`. These lines create the script:
 
 ``` r
 # worlds longest single line of code please dont judge me
-run_command <- sprintf("Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10", covariates, output, image_paths, mask, smoothing, inclusion, subjID, my_formula, padjust)
-#not run
+run_command <- sprintf(
+  "Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10",
+  covariates, output, image_paths, mask, smoothing,
+  inclusion, subjID, my_formula, padjust
+)
+
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh")
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseISLACBF.Sh")
+```
+
+And you can call it like so:
+
+``` r
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseISLACBF.Sh")
 ```
 
 Results
@@ -145,7 +164,7 @@ The results can be found in the `../results/` directory, where the images of the
 
 ``` r
 fdr_images <-
-  list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+  list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
   pattern = "fdr",
   full.names = TRUE) %>%
   lapply(., readNIfTI, reorient = FALSE)
@@ -157,7 +176,7 @@ maskdat <- img_data(mask_img)
 Also grab a list of the covariates:
 
 ``` r
-output_covariates <- list.files("/data/jux/BBL/projects/isla/results/rawCBF/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
+output_covariates <- list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
                                 pattern = "fdr") %>%
   str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
   .[,2] %>%
@@ -190,16 +209,16 @@ fdr_data
 
 | Significant |    Freq| Covariate             |
 |:------------|-------:|:----------------------|
-| FALSE       |      77| Intercept             |
-| TRUE        |  102065| Intercept             |
-| FALSE       |   92503| pcaslRelMeanRMSMotion |
-| TRUE        |    9639| pcaslRelMeanRMSMotion |
-| FALSE       |     518| s(age)                |
-| TRUE        |  101624| s(age)                |
-| FALSE       |   10864| s(age) & sex2         |
-| TRUE        |   91278| s(age) & sex2         |
-| FALSE       |   89354| sex.L                 |
-| TRUE        |   12788| sex.L                 |
+| FALSE       |   57397| Intercept             |
+| TRUE        |   44745| Intercept             |
+| FALSE       |   96015| pcaslRelMeanRMSMotion |
+| TRUE        |    6127| pcaslRelMeanRMSMotion |
+| FALSE       |  101817| s(age)                |
+| TRUE        |     325| s(age)                |
+| FALSE       |  102092| s(age) & sex2         |
+| TRUE        |      50| s(age) & sex2         |
+| FALSE       |  102134| sex.L                 |
+| TRUE        |       8| sex.L                 |
 
 ``` r
 fdr_data %>%
