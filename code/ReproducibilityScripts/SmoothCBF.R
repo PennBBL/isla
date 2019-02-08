@@ -1,10 +1,18 @@
-library(fslr)
-library(dplyr)
-library(tidyr)
-library(stringr)
+#' ---
+#' title: "GMD Correlation Plots"
+#' author: "Tinashe M. Tapera"
+#' date: "2018-02-04"
+#' ---
 
-######## A script to get a cbf map, smooth it with radius 3 or 4, and write new images to file
-######## see here code/sandbox/final_code_Kristin/flameo/flameo_orig_smooth.R
+#+ setup
+suppressPackageStartupMessages({
+  library(fslr)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+})
+
+#' This script is used to smooth the CBF maps for both radius of 3 and 4. See here: code/sandbox/final_code_Kristin/flameo/flameo_orig_smooth.R
 
 print("Gathering data for cbf (size = 3)")
 
@@ -72,3 +80,4 @@ all_scans <-
                         return(return_path)
                         })
           )
+print(sprintf("Done! Smoothed images are in %s", smoothed_dir))

@@ -74,7 +74,7 @@ head(covariates_df) %>% kable()
 #' `output`
 #' Quickly assign an output directory
 
-output <- file.path(paste0("/data/jux/BBL/projects/isla/results/", "cbf_", SIZE))
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/", "isla_cbf_", SIZE))
 
 #' `imagepaths`
 #' Next we find the voxelwise CBF data, and create a spreadsheet of input paths:
@@ -129,13 +129,14 @@ source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Call
 
 #' And you can call it like so:
 #+ qsub call, eval = FALSE
-system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseISLACBF.Sh")
+#system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseISLACBF.Sh")
 #' ## Results
 
 #' The results can be found in the `../results/` directory, where the images of the final voxelwise tests are output as nifti's. First, read in the NIfTI outputs and mask:
 fdr_images <-
-  list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-  pattern = "fdr",
+  list.files(file.path(paste0(output,
+    "/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/")),
+    pattern = "fdr",
   full.names = TRUE) %>%
   lapply(., readNIfTI, reorient = FALSE)
 
@@ -144,8 +145,9 @@ maskdat <- img_data(mask_img)
 
 #' Also grab a list of the covariates:
 
-output_covariates <- list.files("/data/jux/BBL/projects/isla/results/cbf_3/n30_path_include_smooth0/n30gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/",
-                                pattern = "fdr") %>%
+output_covariates <- list.files(file.path(paste0(output,
+  "/n1132_path_include_smooth0/n1132gam_Cov_sage_sagebysex_sex_pcaslRelMeanRMSMotion/")),
+  pattern = "fdr") %>%
   str_match(string = ., pattern = "fdr_(.*)\\.nii") %>%
   .[,2] %>%
   str_replace(pattern = "sage", "s(age)") %>%
@@ -174,4 +176,4 @@ fdr_data %>%
     coord_flip() +
     labs(title = "Number of Significant Voxels Per Covariate",
          subtitle = "FDR Corrected Voxelwise GAM",
-         caption = "Model: CBF~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion")
+         caption = paste0("Model: ISLA-CBF~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion for size = ", SIZE))
