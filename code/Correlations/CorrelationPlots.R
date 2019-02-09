@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
@@ -91,7 +91,7 @@ df %>%
 #' We specify the sample here:
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 5) else .}
+  { if( SAMPLE ) sample_n(., 400) else .}
 
 #' And read in the images:
 gmd_images <-
