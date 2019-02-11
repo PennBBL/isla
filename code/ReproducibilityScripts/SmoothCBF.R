@@ -25,10 +25,10 @@ y_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl
 
 radius <- 3
 if(radius==4){
-	sigma = 2.128319
+	sigma = radius / 2.35482004503
 }
 if(radius==3){
-	sigma = 1.596239
+	sigma = radius / 2.35482004503
 }
 
 mask <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/gm10pcalcovemask.nii.gz")
@@ -59,10 +59,10 @@ if(!dir.exists(smoothed_dir)){
 
 radius <- 4
 if(radius==4){
-        sigma = 2.128319
+        sigma = radius / 2.35482004503
 }
 if(radius==3){
-        sigma = 1.596239
+        sigma = radius / 2.35482004503
 }
 
 print("Running fslsmooth")
