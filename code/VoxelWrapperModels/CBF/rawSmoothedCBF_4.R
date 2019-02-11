@@ -1,7 +1,7 @@
 #' ---
-#' title: "Multivariate Voxelwise `gam()`: Raw CBF"
+#' title: "Multivariate Voxelwise `gam()`: Raw Smoothed CBF (Size: 4)"
 #' author: "Tinashe M. Tapera"
-#' date: "2018-02-8"
+#' date: "2018-02-11"
 #' ---
 #' NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
 #+ setup
@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
   library(oro.nifti)
 })
 set.seed(1000)
-print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
+print(paste("Updated:", format(Sys.time(), "%Y-%m-%d ")))
 
 #' `covariates`
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
@@ -37,7 +37,7 @@ cbfMotion <-
   select(scanid, pcaslRelMeanRMSMotion) %>%
   mutate(scanid = as.character(scanid))
 
-cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
+cbf_path <- file.path("/data/jux/BBL/projects/isla/data/rawSmoothedCBF_4")
 
 all_scans <-
   list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
@@ -55,12 +55,12 @@ covariates_df <-
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
 
-  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_rawCBF.rds" %T>%
+  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_rawSmoothedCBF_4.rds" %T>%
     saveRDS(covariates_df, .)
 
 }
 #' `output`
-output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "raw_cbf/"))
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "rawSmoothedCBF_4/"))
 
 #' `imagepaths`
 image_paths <- "path"
@@ -89,9 +89,9 @@ run_command <- sprintf(
 )
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh")
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawSmoothedCBF_4.Sh")
 
 #+ qsub call, eval = FALSE
-system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh",
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawSmoothedCBF_4.Sh",
   wait = FALSE,
   intern = FALSE)
