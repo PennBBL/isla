@@ -47,37 +47,51 @@ cbf_example <-
 
 # the mask for this sample
 pcasl_mask <- readNIfTI(mask_path)
-gmd_example <- gmd_example %>%
-  mutate(nifti = fsl_mask(path, mask = pcasl_mask))
+pcasl_mask <- img_data(pcasl_mask)
+
+#' First, set any negative values to zero
 cbf_example <- cbf_example %>%
-  mutate(nifti = fsl_mask(path, mask = pcasl_mask))
+  mutate(
+    path = fsl_maths(
+      cbf_example$path,
+      opts = c("-thr", 0)
+    )
+  )
+
+gmd_example <- gmd_example %>%
+  mutate(
+    path = fsl_maths(
+      gmd_example$path,
+      opts = c("-thr", 0)
+    )
+  )
 
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
-  fslmerge(
+  fsl_merge(
     cbf_example$path,
-    direction = c("t"),
-    retimg = TRUE
+    direction = c("t")
   )
 
 #' And the GMD into one volume:
 merged_gmd <-
-  fslmerge(
+  fsl_merge(
     gmd_example$path,
-    direction = c("t"),
-    retimg = TRUE
+    direction = c("t")
   )
 
 #' Then we calculate the mean values using `fslmaths`
 
-mean_cbf <- fslmaths(merged_cbf, opts = "-Tmean")
-mean_gmd <- fslmaths(merged_gmd, opts = "-Tmean")
+mean_cbf <- fsl_maths(merged_cbf, opts = "-Tmean")
+mean_gmd <- fsl_maths(merged_gmd, opts = "-Tmean")
 
 #' From here, we can extract the data from the images and plot it:
-cbf_dat <- img_data(mean_cbf) %>%
-  .[pcasl_mask != 0]
-gmd_dat <- img_data(mean_gmd) %>%
-  .[pcasl_mask != 0]
+cbf_dat <- readNIfTI(mean_cbf)
+cbf_dat <- img_data(cbf_dat)
+cbf_dat <- cbf_dat[pcasl_mask != 0]
+gmd_dat <- readNIfTI(mean_cbf)
+gmd_dat <- img_data(gmd_dat)
+gmd_dat <- gmd_dat[pcasl_mask != 0]
 
 df <- data_frame(cbf_dat, gmd_dat)
 df %>%
@@ -91,7 +105,7 @@ df %>%
 #' We specify the sample here:
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 400) else .}
+  { if( SAMPLE ) sample_n(., 100) else .}
 
 #' And read in the images:
 gmd_images <-
@@ -117,9 +131,20 @@ read_and_load <- function(path, mask){
   dat <- readNIfTI(path)
   dat <- img_data(dat)
 
-  dat[mask != 0]
+  dat[mask == 1]
 
 }
+
+#' Threshold each of the images at 0
+cbf_images <- cbf_images %>%
+  mutate(
+    path = fsl_maths(path,opts = c("-thr", 0))
+  )
+
+gmd_images <- gmd_images %>%
+  mutate(
+    path = fsl_maths(path,opts = c("-thr", 0))
+  )
 
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
@@ -184,6 +209,17 @@ alff_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
+#' Threshold each of the images at 0
+alff_images <- alff_images %>%
+  mutate(
+    path = fsl_maths(path,opts = c("-thr", 0))
+  )
+
+gmd_images <- gmd_images %>%
+  mutate(
+    path = fsl_maths(path,opts = c("-thr", 0))
+  )
+
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, alff_images, by = "scanid") %>%
   summarise_at(
@@ -231,6 +267,12 @@ reho_images <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
+
+#' Threshold each of the images at 0
+reho_images <- reho_images %>%
+  mutate(
+    path = fsl_maths(path,opts = c("-thr", 0))
+  )
 
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
 df <- left_join(gmd_images, reho_images, by = "scanid") %>%
