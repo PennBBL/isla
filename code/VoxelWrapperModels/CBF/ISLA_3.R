@@ -91,3 +91,8 @@ run_command <- sprintf(
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
 source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF3.Sh")
+
+#+ qsub call, eval = TRUE
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF3.Sh",
+  wait = FALSE,
+  intern = FALSE)
