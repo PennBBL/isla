@@ -49,14 +49,6 @@ cbf_example <-
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
 
-gmd_example <- gmd_example %>%
-  mutate(
-    path = fsl_maths(
-      gmd_example$path,
-      opts = c("-thr", 0)
-    )
-  )
-
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
   fsl_merge(
