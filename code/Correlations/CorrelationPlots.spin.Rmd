@@ -1,10 +1,10 @@
-#' ---
-#' title: "GMD Correlation Plots"
-#' author: "Tinashe M. Tapera"
-#' date: "2018-02-04"
-#' ---
+---
+title: "GMD Correlation Plots"
+author: "Tinashe M. Tapera"
+date: "2018-02-04"
+---
 
-#+ setup
+```{r setup}
 suppressPackageStartupMessages({
   library(tidyr, quietly = TRUE)
   library(dplyr, quietly = TRUE)
@@ -19,9 +19,12 @@ suppressPackageStartupMessages({
 })
 set.seed(1000)
 SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
-#' # Introduction
-#' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
+```
 
+# Introduction
+Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
+
+```{r }
 gmd_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd")
 mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
 cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
@@ -48,9 +51,11 @@ cbf_example <-
 # the mask for this sample
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
+```
 
-#' Set the threshold for negative voxels
+Set the threshold for negative voxels
 
+```{r }
 cbf_example <- cbf_example %>%
   mutate(
     path = fsl_maths(path, opts = c("-thr", 0))
@@ -60,27 +65,38 @@ gmd_example <- gmd_example %>%
   mutate(
     path = fsl_maths(path, opts = c("-thr", 0))
   )
+```
 
-#' Next we use `fslmerge` to merge the CBF images into one volume:
+Next we use `fslmerge` to merge the CBF images into one volume:
+
+```{r }
 merged_cbf <-
   fsl_merge(
     cbf_example$path,
     direction = c("t")
   )
+```
 
-#' And the GMD into one volume:
+And the GMD into one volume:
+
+```{r }
 merged_gmd <-
   fsl_merge(
     gmd_example$path,
     direction = c("t")
   )
+```
 
-#' Then we calculate the mean values using `fslmaths`
+Then we calculate the mean values using `fslmaths`
 
+```{r }
 mean_cbf <- fsl_maths(merged_cbf, opts = "-Tmean")
 mean_gmd <- fsl_maths(merged_gmd, opts = "-Tmean")
+```
 
-#' From here, we can extract the data from the images and plot it:
+From here, we can extract the data from the images and plot it:
+
+```{r }
 cbf_dat <- readNIfTI(mean_cbf)
 cbf_dat <- img_data(cbf_dat)
 cbf_dat <- cbf_dat[pcasl_mask != 0]
@@ -93,17 +109,23 @@ df %>%
   ggplot(aes(x = cbf_dat, y = gmd_dat)) +
     geom_hex() +
     stat_cor(geom = "label", method = "spearman", output.type = "expression")
+```
 
-#' Looks good!
-#'
-#' # GMD~CBF
-#'
-#' We specify the sample here:
+Looks good!
+
+# GMD~CBF
+
+We specify the sample here:
+
+```{r }
 cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
   select(-X) %>%
   { if( SAMPLE ) sample_n(., 100) else .}
+```
 
-#' And read in the images:
+And read in the images:
+
+```{r }
 gmd_images <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
@@ -130,9 +152,11 @@ read_and_load <- function(path, mask){
   dat[mask == 1]
 
 }
+```
 
-#' Set the threshold for negative voxels
+Set the threshold for negative voxels
 
+```{r }
 cbf_images <- cbf_images %>%
   mutate(
     path = fsl_maths(path, opts = c("-thr", 0))
@@ -142,8 +166,11 @@ gmd_images <- gmd_images %>%
   mutate(
     path = fsl_maths(path, opts = c("-thr", 0))
   )
+```
 
-#' Join paths; then 1) merge, 2) mean, and 3) mask the images:
+Join paths; then 1) merge, 2) mean, and 3) mask the images:
+
+```{r }
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
@@ -161,9 +188,11 @@ df2 <-
     V1 = read_and_load(df$path.x, pcasl_mask),
     V2 = read_and_load(df$path.y, pcasl_mask)
   )
+```
 
+And plot:
 
-#' And plot:
+```{r }
 df2 %>%
   ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
@@ -175,10 +204,13 @@ df2 %>%
   ) +
   stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
+```
 
-#' # GMD~Alff
-#'
-#' We specify the sample, image paths, and mask here:
+# GMD~Alff
+
+We specify the sample, image paths, and mask here:
+
+```{r }
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
   { if( SAMPLE ) sample_n(., 100) else .}
@@ -186,8 +218,11 @@ rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
 alff_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff"
 mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
 rest_mask <- readNIfTI(mask_path)
+```
 
-#' And read in the images:
+And read in the images:
+
+```{r }
 gmd_images <-
   list.files(gmd_path,
     pattern = regex("[^tmp.nii.gz]"),
@@ -205,8 +240,11 @@ alff_images <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
+```
 
-#' Join paths; then 1) merge, 2) mean, and 3) mask the images:
+Join paths; then 1) merge, 2) mean, and 3) mask the images:
+
+```{r }
 df <- left_join(gmd_images, alff_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
@@ -224,9 +262,11 @@ df2 <-
     V1 = read_and_load(df$path.x, rest_mask),
     V2 = read_and_load(df$path.y, rest_mask)
   )
+```
 
+And plot:
 
-#' And plot:
+```{r }
 df2 %>%
   ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
@@ -238,13 +278,19 @@ df2 %>%
   ) +
   stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
+```
 
-#' # GMD~Reho
-#'
-#' Sample and mask are already specified, we just need the path to `reho` images:
+# GMD~Reho
+
+Sample and mask are already specified, we just need the path to `reho` images:
+
+```{r }
 reho_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho"
+```
 
-#' And read in the images (`gmd` is already specified):
+And read in the images (`gmd` is already specified):
+
+```{r }
 reho_images <-
   list.files(reho_path,
     pattern = regex("[^tmp.nii.gz]"),
@@ -253,8 +299,11 @@ reho_images <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
+```
 
-#' Join paths; then 1) mask, 2) merge, and 3) mean the images:
+Join paths; then 1) mask, 2) merge, and 3) mean the images:
+
+```{r }
 df <- left_join(gmd_images, reho_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
@@ -272,9 +321,11 @@ df2 <-
     V1 = read_and_load(df$path.x, rest_mask),
     V2 = read_and_load(df$path.y, rest_mask)
   )
+```
 
+And plot:
 
-#' And plot:
+```{r }
 df2 %>%
   ggplot(aes(x = V1, y = V2)) +
   geom_hex() +
@@ -286,9 +337,19 @@ df2 %>%
   ) +
   stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
+```
 
-#' Done!
+Done!
+Session info:
 
-#' Session info:
+```{r }
 print(R.version.string)
 print(paste("Updated:", format(Sys.time(), "%Y-%m-%d")))
+```
+
+
+---
+title: "CorrelationPlots.R"
+author: "ttapera"
+date: "Tue Feb 12 14:22:08 2019"
+---
