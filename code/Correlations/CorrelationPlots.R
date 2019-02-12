@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
@@ -48,6 +48,14 @@ cbf_example <-
 # the mask for this sample
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
+
+gmd_example <- gmd_example %>%
+  mutate(
+    path = fsl_maths(
+      gmd_example$path,
+      opts = c("-thr", 0)
+    )
+  )
 
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
@@ -157,7 +165,7 @@ df2 %>%
 #' We specify the sample, image paths, and mask here:
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X) %>%
-  { if( SAMPLE ) sample_n(., 5) else .}
+  { if( SAMPLE ) sample_n(., 100) else .}
 
 alff_path <- "/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff"
 mask_path <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
@@ -181,17 +189,6 @@ alff_images <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
-
-#' Threshold each of the images at 0
-alff_images <- alff_images %>%
-  mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
-  )
-
-gmd_images <- gmd_images %>%
-  mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
-  )
 
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, alff_images, by = "scanid") %>%
@@ -240,12 +237,6 @@ reho_images <-
   mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}")) %>%
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
-
-#' Threshold each of the images at 0
-reho_images <- reho_images %>%
-  mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
-  )
 
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
 df <- left_join(gmd_images, reho_images, by = "scanid") %>%
