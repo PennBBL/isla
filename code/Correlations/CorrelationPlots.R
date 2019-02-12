@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
@@ -48,14 +48,6 @@ cbf_example <-
 # the mask for this sample
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
-
-gmd_example <- gmd_example %>%
-  mutate(
-    path = fsl_maths(
-      gmd_example$path,
-      opts = c("-thr", 0)
-    )
-  )
 
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
