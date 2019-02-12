@@ -11,7 +11,7 @@ imco_images=as.character(args[1])
 bblid=as.character(args[2])
 scanid=as.character(args[3])
 modality=as.character(args[4])
-size=as.character(args[5])
+fwhm=as.character(args[5])
 
 #########################################
 #	Step 1: Extrapolate		#
@@ -85,7 +85,7 @@ setwd(imco_images)
 original_files = list.files(imco_images, pattern=regex("^[^0-9]"))
 new_names = original_files %>%
         str_c(bblid, scanid, ., sep="_")%>%
-        str_replace(., ".nii.gz", paste0("_vox", size, ".nii.gz"))
+        str_replace(., ".nii.gz", paste0("_fwhm", fwhm, ".nii.gz"))
 
 file.rename(original_files, new_names)
 
