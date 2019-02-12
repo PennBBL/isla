@@ -49,6 +49,18 @@ cbf_example <-
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
 
+#' Set the threshold for negative voxels
+
+cbf_example <- cbf_example %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+gmd_example <- gmd_example %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
   fsl_merge(
@@ -119,6 +131,18 @@ read_and_load <- function(path, mask){
 
 }
 
+#' Set the threshold for negative voxels
+
+cbf_images <- cbf_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+gmd_images <- gmd_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
   summarise_at(
@@ -182,6 +206,20 @@ alff_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
+<<<<<<< HEAD
+=======
+#' Threshold each of the images at 0
+alff_images <- alff_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+gmd_images <- gmd_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+>>>>>>> 33ac39f7434a68aff361b6a02d8af9ad38bc322c
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, alff_images, by = "scanid") %>%
   summarise_at(
@@ -230,6 +268,15 @@ reho_images <-
   filter(scanid %in% rest_sample$scanid) %>%
   select(scanid, everything())
 
+<<<<<<< HEAD
+=======
+#' Threshold each of the images at 0
+reho_images <- reho_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+>>>>>>> 33ac39f7434a68aff361b6a02d8af9ad38bc322c
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
 df <- left_join(gmd_images, reho_images, by = "scanid") %>%
   summarise_at(
