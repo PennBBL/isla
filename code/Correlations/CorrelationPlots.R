@@ -49,23 +49,6 @@ cbf_example <-
 pcasl_mask <- readNIfTI(mask_path)
 pcasl_mask <- img_data(pcasl_mask)
 
-#' First, set any negative values to zero
-cbf_example <- cbf_example %>%
-  mutate(
-    path = fsl_maths(
-      cbf_example$path,
-      opts = c("-thr", 0)
-    )
-  )
-
-gmd_example <- gmd_example %>%
-  mutate(
-    path = fsl_maths(
-      gmd_example$path,
-      opts = c("-thr", 0)
-    )
-  )
-
 #' Next we use `fslmerge` to merge the CBF images into one volume:
 merged_cbf <-
   fsl_merge(
@@ -96,7 +79,8 @@ gmd_dat <- gmd_dat[pcasl_mask != 0]
 df <- data_frame(cbf_dat, gmd_dat)
 df %>%
   ggplot(aes(x = cbf_dat, y = gmd_dat)) +
-    geom_hex()
+    geom_hex() +
+    stat_cor(geom = "label", method = "spearman", output.type = "expression")
 
 #' Looks good!
 #'
@@ -135,17 +119,6 @@ read_and_load <- function(path, mask){
 
 }
 
-#' Threshold each of the images at 0
-cbf_images <- cbf_images %>%
-  mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
-  )
-
-gmd_images <- gmd_images %>%
-  mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
-  )
-
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
   summarise_at(
@@ -176,7 +149,7 @@ df2 %>%
     title = "Voxelwise GMD & CBF",
     caption = "Spearman Correlation Shown"
   ) +
-  stat_cor(method = "spearman") +
+  stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
 
 #' # GMD~Alff
@@ -250,7 +223,7 @@ df2 %>%
     title = "Voxelwise GMD & Alff",
     caption = "Spearman Correlation Shown"
   ) +
-  stat_cor(method = "spearman") +
+  stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
 
 #' # GMD~Reho
@@ -304,11 +277,11 @@ df2 %>%
     title = "Voxelwise GMD & Reho",
     caption = "Spearman Correlation Shown"
   ) +
-  stat_cor(method = "spearman") +
+  stat_cor(method = "spearman", geom = "label") +
   theme_minimal()
 
 #' Done!
----
+
 #' Session info:
 print(R.version.string)
 print(paste("Updated:", format(Sys.time(), "%Y-%m-%d")))
