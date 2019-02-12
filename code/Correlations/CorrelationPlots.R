@@ -132,15 +132,15 @@ read_and_load <- function(path, mask){
 }
 
 #' Set the threshold for negative voxels
-
+#+ cbf_thresh, 
 cbf_images <- cbf_images %>%
   mutate(
-    path = fsl_maths(path, opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0), verbose = FALSE)
   )
 
 gmd_images <- gmd_images %>%
   mutate(
-    path = fsl_maths(path, opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0), verbose = FALSE)
   )
 
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
@@ -148,12 +148,14 @@ df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
-    direction = c("t")
+    direction = c("t"),
+    verbose = FALSE
   ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_maths,
-    opts = c("-Tmean")
+    opts = c("-Tmean"),
+    verbose = FALSE
   )
 
 df2 <-
@@ -209,12 +211,12 @@ alff_images <-
 #' Threshold each of the images at 0
 alff_images <- alff_images %>%
   mutate(
-    path = fsl_maths(path, opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0), verbose = FALSE)
   )
 
 gmd_images <- gmd_images %>%
   mutate(
-    path = fsl_maths(path, opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0), verbose = FALSE)
   )
 
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
@@ -222,12 +224,14 @@ df <- left_join(gmd_images, alff_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
-    direction = c("t")
+    direction = c("t"),
+    verbose = FALSE
   ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_maths,
-    opts = c("-Tmean")
+    opts = c("-Tmean"),
+    verbose = FALSE
   )
 
 df2 <-
@@ -268,7 +272,7 @@ reho_images <-
 #' Threshold each of the images at 0
 reho_images <- reho_images %>%
   mutate(
-    path = fsl_maths(path, opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0), verbose = FALSE)
   )
 
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
@@ -276,12 +280,14 @@ df <- left_join(gmd_images, reho_images, by = "scanid") %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_merge,
-    direction = c("t")
+    direction = c("t"),
+    verbose = FALSE
   ) %>%
   summarise_at(
     .vars = vars(contains("path")),
     .funs = fsl_maths,
-    opts = c("-Tmean")
+    opts = c("-Tmean"),
+    verbose = FALSE
   )
 
 df2 <-
