@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
   library(fslr, quietly = TRUE)
 })
 set.seed(1000)
-SAMPLE <- TRUE # sample the full data if memory is limited e.g. not in qsub
+SAMPLE <- FALSE # sample the full data if memory is limited e.g. not in qsub
 #' # Introduction
 #' Here we visualise the relationship between voxelwise GMD values and CBF, Alff, and Reho in the PNC sample for ISLA. This method uses spatial correlation between two variables. As an example, here we calculate the spatial correlation between two participant's GMD and CBF measures.
 
@@ -52,17 +52,13 @@ pcasl_mask <- img_data(pcasl_mask)
 #' Set the threshold for negative voxels
 
 cbf_example <- cbf_example %>%
-  mutate(path = fsl_maths(
-    path,
-    opts = c("-thr", 0)
-    )
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
   )
 
 gmd_example <- gmd_example %>%
-  mutate(path = fsl_maths(
-    path,
-    opts = c("-thr", 0)
-    )
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
   )
 
 #' Next we use `fslmerge` to merge the CBF images into one volume:
@@ -135,6 +131,18 @@ read_and_load <- function(path, mask){
 
 }
 
+#' Set the threshold for negative voxels
+
+cbf_images <- cbf_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
+gmd_images <- gmd_images %>%
+  mutate(
+    path = fsl_maths(path, opts = c("-thr", 0))
+  )
+
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
 df <- left_join(gmd_images, cbf_images, by = "scanid") %>%
   summarise_at(
@@ -201,12 +209,12 @@ alff_images <-
 #' Threshold each of the images at 0
 alff_images <- alff_images %>%
   mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0))
   )
 
 gmd_images <- gmd_images %>%
   mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0))
   )
 
 #' Join paths; then 1) merge, 2) mean, and 3) mask the images:
@@ -260,7 +268,7 @@ reho_images <-
 #' Threshold each of the images at 0
 reho_images <- reho_images %>%
   mutate(
-    path = fsl_maths(path,opts = c("-thr", 0))
+    path = fsl_maths(path, opts = c("-thr", 0))
   )
 
 #' Join paths; then 1) mask, 2) merge, and 3) mean the images:
