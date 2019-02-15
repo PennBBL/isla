@@ -19,7 +19,7 @@ set.seed(1000)
 print(paste("Updated:", format(Sys.time(), "%Y-%m-%d ")))
 ```
 
-    ## [1] "Updated: 2019-02-11 "
+    ## [1] "Updated: 2019-02-13 "
 
 `covariates`
 

@@ -1,4 +1,4 @@
-Multivariate Voxelwise `gam()`: Raw CBF
+Multivariate Voxelwise `gam()`: ISLA CBF Size 4
 ================
 Tinashe M. Tapera
 2018-02-8
@@ -43,12 +43,13 @@ cbfMotion <-
   select(scanid, pcaslRelMeanRMSMotion) %>%
   mutate(scanid = as.character(scanid))
 
-cbf_path <- file.path("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf")
+cbf_path <- file.path("/data/jux/BBL/projects/isla/data/imco1/gmd_cbf")
 
 all_scans <-
   list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
-  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}(?=_)")) %>%
+  mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
+  filter(str_detect(path, "isla_diff_vox4")) %>%
   select(scanid, everything())
 
 covariates_df <-
@@ -61,7 +62,7 @@ covariates_df <-
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
 
-  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_rawCBF.rds" %T>%
+  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_ISLACBF4.rds" %T>%
     saveRDS(covariates_df, .)
 
 }
@@ -70,7 +71,7 @@ if (all(purrr::map_lgl(covariates_df$path, file.exists))){
 `output`
 
 ``` r
-output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "raw_cbf/"))
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "cbf4/"))
 ```
 
 `imagepaths`
@@ -125,11 +126,11 @@ run_command <- sprintf(
 )
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh")
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF4.Sh")
 ```
 
 ``` r
-system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawCBF.Sh",
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF4.Sh",
   wait = FALSE,
   intern = FALSE)
 ```
