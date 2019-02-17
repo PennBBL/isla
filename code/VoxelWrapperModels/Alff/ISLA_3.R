@@ -1,7 +1,7 @@
 #' ---
-#' title: "Multivariate Voxelwise `gam()`: ISLA CBF Size 3"
+#' title: "Multivariate Voxelwise `gam()`: ISLA Alff Size 3"
 #' author: "Tinashe M. Tapera"
-#' date: "2018-02-8"
+#' date: "2019-02-17"
 #' ---
 #' NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
 #+ setup
@@ -15,10 +15,10 @@ suppressPackageStartupMessages({
   library(oro.nifti)
 })
 set.seed(1000)
-print(paste("Updated:", format(Sys.time(), '%Y-%m-%d ')))
+print(paste("Last Run:", format(Sys.time(), '%Y-%m-%d ')))
 
 #' `covariates`
-cbf_sample <- read.csv("/data/jux/BBL/projects/isla/data/cbfSample.csv") %>%
+rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X)
 
 demographics <-
@@ -30,17 +30,17 @@ demographics <-
     scanid = as.character(scanid)
   ) %>%
   select(scanid, sex, age) %>%
-  filter(scanid %in% cbf_sample$scanid)
+  filter(scanid %in% rest_sample$scanid)
 
-cbfMotion <-
-  read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/n1601_PcaslQaData_20170403.csv") %>%
-  select(scanid, pcaslRelMeanRMSMotion) %>%
+rest_Motion <-
+  read.csv("/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/n1601_RestQAData_20170714.csv") %>%
+  select(scanid, restRelMeanRMSMotion) %>%
   mutate(scanid = as.character(scanid))
 
-cbf_path <- file.path("/data/jux/BBL/projects/isla/data/imco1/gmd_cbf")
+alff_path <- file.path("/data/jux/BBL/projects/isla/data/imco1/gmd_alff")
 
 all_scans <-
-  list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
+  list.files(alff_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
   filter(str_detect(path, "isla_diff_vox3")) %>%
@@ -49,19 +49,19 @@ all_scans <-
 covariates_df <-
   all_scans %>%
   left_join(demographics, by = "scanid") %>%
-  left_join(cbfMotion, by = "scanid") %>%
+  left_join(rest_Motion, by = "scanid") %>%
   mutate(include = 1) %>%  # for inclusion critera
   filter(complete.cases(.))
 
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
 
-  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_ISLACBF3.rds" %T>%
+  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_ISLA_Alff3.rds" %T>%
     saveRDS(covariates_df, .)
 
 }
 #' `output`
-output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "cbf3/"))
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1/", "alff3/"))
 
 #' `imagepaths`
 image_paths <- "path"
@@ -76,7 +76,7 @@ inclusion <- "include"
 #' `subjID`
 subjID <- "scanid"
 #' `formula`
-my_formula <- "\"~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion\""
+my_formula <- "\"~s(age)+s(age,by=sex)+sex+restRelMeanRMSMotion\""
 
 #' `padjust`
 padjust <- "fdr"
@@ -90,9 +90,9 @@ run_command <- sprintf(
 )
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF3.Sh")
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh")
 
 #+ qsub call, eval = TRUE
-system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaCBF3.Sh",
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh",
   wait = FALSE,
   intern = FALSE)
