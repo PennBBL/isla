@@ -67,7 +67,7 @@ output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperMode
 image_paths <- "path"
 
 #' `mask`
-mask <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
+mask <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
 
 #' `smoothing`
 smoothing <- 0

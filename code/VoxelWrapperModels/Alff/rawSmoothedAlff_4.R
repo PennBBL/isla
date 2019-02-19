@@ -1,7 +1,7 @@
 #' ---
-#' title: "Multivariate Voxelwise `gam()`: ISLA Alff Size 3"
+#' title: "Multivariate Voxelwise `gam()`: Raw Smoothed Alff (Size: 4)"
 #' author: "Tinashe M. Tapera"
-#' date: "2019-02-17"
+#' date: "2019-02-11"
 #' ---
 #' NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
 #+ setup
@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
   library(oro.nifti)
 })
 set.seed(1000)
-print(paste("Last Run:", format(Sys.time(), '%Y-%m-%d ')))
+print(paste("Last Run:", format(Sys.time(), "%Y-%m-%d ")))
 
 #' `covariates`
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
@@ -37,13 +37,12 @@ rest_Motion <-
   select(scanid, restRelMeanRMSMotion) %>%
   mutate(scanid = as.character(scanid))
 
-alff_path <- file.path("/data/jux/BBL/projects/isla/data/imco1/gmd_alff")
+alff_path <- file.path("/data/jux/BBL/projects/isla/data/rawSmoothedAlff_4")
 
 all_scans <-
   list.files(alff_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
-  mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
-  filter(str_detect(path, "isla_diff_vox3")) %>%
+  mutate(scanid = str_extract(path, "(?<=/)[:digit:]{4,}(?=_)")) %>%
   select(scanid, everything())
 
 covariates_df <-
@@ -56,12 +55,12 @@ covariates_df <-
 if (all(purrr::map_lgl(covariates_df$path, file.exists))){
   #ensures that all of the paths are correctly written
 
-  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_ISLA_Alff3.rds" %T>%
+  covariates <- "/data/jux/BBL/projects/isla/data/sandbox/voxelwise_gam_covariates_rawSmoothedAlff_4.rds" %T>%
     saveRDS(covariates_df, .)
 
 }
 #' `output`
-output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1/", "alff3/"))
+output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/", "rawSmoothedAlff_4/"))
 
 #' `imagepaths`
 image_paths <- "path"
@@ -90,9 +89,9 @@ run_command <- sprintf(
 )
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
-source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh")
+source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawSmoothedAlff_4.Sh")
 
 #+ qsub call, eval = TRUE
-system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh",
+system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseRawSmoothedAlff_4.Sh",
   wait = FALSE,
   intern = FALSE)

@@ -1,10 +1,11 @@
-#' ---
-#' title: "Multivariate Voxelwise `gam()`: ISLA Alff Size 3"
-#' author: "Tinashe M. Tapera"
-#' date: "2019-02-17"
-#' ---
-#' NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
-#+ setup
+Multivariate Voxelwise `gam()`: ISLA Alff Size 3
+================
+Tinashe M. Tapera
+2019-02-17
+
+NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
+
+``` r
 suppressPackageStartupMessages({
   library(tidyr)
   library(dplyr)
@@ -16,8 +17,13 @@ suppressPackageStartupMessages({
 })
 set.seed(1000)
 print(paste("Last Run:", format(Sys.time(), '%Y-%m-%d ')))
+```
 
-#' `covariates`
+    ## [1] "Last Run: 2019-02-17 "
+
+`covariates`
+
+``` r
 rest_sample <- read.csv("/data/jux/BBL/projects/isla/data/restSample.csv") %>%
   select(-X)
 
@@ -60,29 +66,59 @@ if (all(purrr::map_lgl(covariates_df$path, file.exists))){
     saveRDS(covariates_df, .)
 
 }
-#' `output`
+```
+
+`output`
+
+``` r
 output <- file.path(paste0("/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1/", "alff3/"))
+```
 
-#' `imagepaths`
+`imagepaths`
+
+``` r
 image_paths <- "path"
+```
 
-#' `mask`
-mask <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_RestCoverageMask.nii.gz")
+`mask`
 
-#' `smoothing`
+``` r
+mask <- file.path("/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz")
+```
+
+`smoothing`
+
+``` r
 smoothing <- 0
-#' `inclusion`
+```
+
+`inclusion`
+
+``` r
 inclusion <- "include"
-#' `subjID`
+```
+
+`subjID`
+
+``` r
 subjID <- "scanid"
-#' `formula`
+```
+
+`formula`
+
+``` r
 my_formula <- "\"~s(age)+s(age,by=sex)+sex+restRelMeanRMSMotion\""
+```
 
-#' `padjust`
+`padjust`
+
+``` r
 padjust <- "fdr"
+```
 
-#' The remaining arguments, `splits`, `residual`, and `numberofcores`, `skipfourD`, and `residual`,all remain default.
-#+ script
+The remaining arguments, `splits`, `residual`, and `numberofcores`, `skipfourD`, and `residual`,all remain default.
+
+``` r
 run_command <- sprintf(
   "Rscript /data/jux/BBL/projects/isla/code/voxelwiseWrappers/gam_voxelwise.R -c %s -o %s -p %s -m %s -s %s -i %s -u %s -f %s -a %s -n 5 -s 0 -k 10",
   covariates, output, image_paths, mask, smoothing,
@@ -91,8 +127,10 @@ run_command <- sprintf(
 writeLines(c("unset PYTHONPATH; unalias python
 export PATH=/data/joy/BBL/applications/miniconda3/bin:$PATH
 source activate py2k", run_command), "/data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh")
+```
 
-#+ qsub call, eval = TRUE
+``` r
 system("qsub -l h_vmem=60G,s_vmem=60G -q himem.q /data/jux/BBL/projects/isla/code/qsub_Calls/RunVoxelwiseIslaAlff3.Sh",
   wait = FALSE,
   intern = FALSE)
+```
