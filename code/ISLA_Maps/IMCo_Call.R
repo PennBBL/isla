@@ -21,6 +21,7 @@ if(modality=="cbf"){
 	cbfDir = "/home/ttapera/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/asl/voxelwiseMaps_cbf/"
   img_suffix = "_asl_quant_ssT1Std.nii.gz"
 	Y_image = readnii(paste0(cbfDir,scanid, img_suffix))
+	Y_image = fslmaths(Y_image, opts = c("-thr", 0), verbose = FALSE)
 	print("CBF read in successfully")
 }
 
@@ -29,7 +30,8 @@ if(modality=="alff"){
         alffDir = "/home/ttapera/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_alff/"
         img_suffix = "_alffStd.nii.gz"
         Y_image = readnii(paste0(alffDir,scanid, img_suffix))
-        print("ALFF read in successfully")
+        Y_image = fslmaths(Y_image, opts = c("-thr", 0), verbose = FALSE)
+	print("ALFF read in successfully")
 }
 
 #read in Reho images for sample
@@ -37,12 +39,14 @@ if(modality=="reho"){
         rehoDir = "/home/ttapera/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/rest/voxelwiseMaps_reho/"
         img_suffix = "_rehoStd.nii.gz"
         Y_image = readnii(paste0(rehoDir,scanid, img_suffix))
-        print("Reho read in successfulyl")
+        Y_image = fslmaths(Y_image, opts = c("-thr", 0), verbose = FALSE)
+	print("Reho read in successfulyl")
 }
 
 #read in gmd for cbf sample
 gmdDir = "/home/ttapera/data/joy/BBL/studies/pnc/n1601_dataFreeze/neuroimaging/t1struct/voxelwiseMaps_gmd/"
 X_image = readnii(paste0(gmdDir,scanid, "_atropos3class_prob02SubjToTemp2mm.nii.gz"))
+X_image = fslmaths(X_image, opts = c("-thr", 0), verbose = FALSE)
 print("GMD read in successully")
 
 #read in coverage mask
