@@ -1,5 +1,5 @@
 #' ---
-#' title: "Multivariate Voxelwise `gam()` Results: CBF (imco1.6)"
+#' title: "Multivariate Voxelwise `gam()` Results: CBF (incl. imco1.6)"
 #' author: "Tinashe M. Tapera"
 #' date: "2019-02-20"
 #' ---
@@ -29,11 +29,22 @@ print(paste("Last Run:", format(Sys.time(), '%Y-%m-%d')))
 #
 
 #+ gather data
-results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1_6"
+results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1"
+rawcbf_dir <- file.path(results_dir, "raw_cbf")
+smoothed3_dir <- file.path(results_dir, "rawSmoothedCBF_3")
+smoothed4_dir <- file.path(results_dir, "rawSmoothedCBF_4")
+isla3_dir <- file.path(results_dir, "cbf3")
+isla4_dir <- file.path(results_dir, "cbf4")
 
+results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1_6"
 isla_cbf_dir <- file.path(results_dir, "cbf_fwhm4")
 
 images_df <- c(
+  rawcbf_dir,
+  smoothed3_dir,
+  smoothed4_dir,
+  isla3_dir,
+  isla4_dir,
   isla_cbf_dir) %>%
   tibble(path = .) %>%
   group_by(path) %>%
@@ -60,7 +71,7 @@ images_df <- images_df %>%
         str_replace(pattern = "\\.L", "") %>%
         str_replace(pattern = "2", ""),
     nifti = map(images_paths, readNIfTI, reorient = FALSE),
-    Y = str_extract(string = path, pattern = "(?<=imco1/).*$")
+    Y = str_extract(string = path, pattern = "(?<=imco1(_6)?/).*$")
 )
 
 mask <- "/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz"
@@ -88,21 +99,6 @@ results <- images_df %>%
   select(Y,results) %>%
   unnest()
 #'
-#' Also, a helper function to help label the plot:
-#'
-
-y_names <- list(
-  "cbf3" = "Y: ISLA CBF 3",
-  "cbf4" = "Y: ISLA CBF 4",
-  "raw_cbf" = "Y: Raw CBF",
-  "rawSmoothedCBF_3" = "Y: Raw Smoothed CBF 3",
-  "rawSmoothedCBF_4" = "Y: Raw Smoothed CBF 4"
-)
-
-my_labels <- function(variable, value){
-  return(y_names[value])
-}
-#'
 #' Now, plot:
 #'
 
@@ -117,4 +113,4 @@ results %>%
       caption = "Model: Y~s(age)+s(age,by=sex)+sex+pcaslRelMeanRMSMotion") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_fill_brewer(palette = "Set1") +
-    facet_wrap(~Y, labeller = my_labels)
+    facet_wrap(~Y)
