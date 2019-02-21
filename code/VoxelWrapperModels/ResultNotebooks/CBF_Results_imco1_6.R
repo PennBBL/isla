@@ -33,8 +33,6 @@ results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1"
 rawcbf_dir <- file.path(results_dir, "raw_cbf")
 smoothed3_dir <- file.path(results_dir, "rawSmoothedCBF_3")
 smoothed4_dir <- file.path(results_dir, "rawSmoothedCBF_4")
-isla3_dir <- file.path(results_dir, "cbf3")
-isla4_dir <- file.path(results_dir, "cbf4")
 
 results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1_6"
 isla_cbf_dir <- file.path(results_dir, "cbf_fwhm4")
@@ -43,8 +41,6 @@ images_df <- c(
   rawcbf_dir,
   smoothed3_dir,
   smoothed4_dir,
-  isla3_dir,
-  isla4_dir,
   isla_cbf_dir) %>%
   tibble(path = .) %>%
   group_by(path) %>%
