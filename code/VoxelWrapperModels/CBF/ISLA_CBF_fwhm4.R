@@ -43,7 +43,7 @@ all_scans <-
   list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
-  filter(str_detect(path, "isla_diff_fwhm4")) %>%
+  filter(str_detect(path, "predictedGMD1")) %>%
   select(scanid, everything())
 
 covariates_df <-

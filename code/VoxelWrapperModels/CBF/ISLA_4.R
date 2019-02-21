@@ -1,7 +1,7 @@
 #' ---
 #' title: "Multivariate Voxelwise `gam()`: ISLA CBF Size 4"
 #' author: "Tinashe M. Tapera"
-#' date: "2018-02-8"
+#' date: "2019-02-08"
 #' ---
 #' NB: This is the script used to run the ISLA models. Please see [this notebook](/data/jux/BBL/projects/isla/code/VoxelWrapperModels/MassUnivariate_Voxelwise.md) for a walk through on how this is constructed.
 #+ setup
@@ -43,7 +43,7 @@ all_scans <-
   list.files(cbf_path,  pattern = ".nii.gz", recursive = TRUE, full.names = TRUE) %>%
   tibble(path = .) %>%
   mutate(scanid = str_extract(path, "(?<=_)[:digit:]{4,}(?=_)")) %>%
-  filter(str_detect(path, "isla_diff_vox4")) %>%
+  filter(str_detect(path, "predictedGMD1")) %>%
   select(scanid, everything())
 
 covariates_df <-
