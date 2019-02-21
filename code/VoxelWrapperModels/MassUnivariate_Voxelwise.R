@@ -1,7 +1,7 @@
 #' ---
 #' title: "Multivariate Voxelwise `gam()` Example"
 #' author: "Tinashe M. Tapera"
-#' date: "2018-01-16"
+#' date: "2019-01-16"
 #' ---
 
 #+ setup
