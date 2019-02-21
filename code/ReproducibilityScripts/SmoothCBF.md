@@ -1,7 +1,7 @@
-GMD Correlation Plots
+Smoothing
 ================
 Tinashe M. Tapera
-2018-02-04
+2019-02-04
 
 ``` r
 suppressPackageStartupMessages({
