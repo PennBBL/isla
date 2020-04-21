@@ -15,3 +15,5 @@ To run ROI based GAM model on raw CBF see: [Mass Univariate ROI GAM notebook](Vo
 To run voxelwise GAM model on raw CBF see: [Mass Univariate Voxelwise GAM notebook](VoxelWrapperModels/MassUnivariate_Voxelwise.md)
 
 See the [Correlations](Correlations/) directory for notebooks with plots of correlations.
+
+(Updated for move to PennLINC)
