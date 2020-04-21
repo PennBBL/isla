@@ -1,10 +1,11 @@
-#' ---
-#' title: "Multivariate Voxelwise `gam()` Results: CBF (incl. imco1.6)"
-#' author: "Tinashe M. Tapera"
-#' date: "2019-02-20"
-#' ---
+Multivariate Voxelwise `gam()` Results: CBF (incl. imco1.6)
+================
+Tinashe M. Tapera
+2019-02-20
 
-#+ setup
+-   [Summarising Results of the ISLA Voxelwise Models](#summarising-results-of-the-isla-voxelwise-models)
+
+``` r
 suppressPackageStartupMessages({
   library(tidyr)
   library(dplyr)
@@ -16,19 +17,30 @@ suppressPackageStartupMessages({
   library(purrr)
   library(RColorBrewer)
 })
+```
 
+    ## Warning: package 'RColorBrewer' was built under R version 3.5.1
+
+``` r
 print(paste("Last Run:", format(Sys.time(), '%Y-%m-%d')))
+```
 
-#' # Summarising Results of the ISLA Voxelwise Models
-#'
-#' Here we visualise the results of the isla voxelwise model. The model is of the form:
-#'
-#' `Y ~ s(age) + s(age,by=sex) + sex + pcaslRelMeanRMSMotion`
-#'
-#' We show the output of the models where `Y` is ISLA corrected CBF where fwhm = 4
+    ## [1] "Last Run: 2019-02-21"
+
+Summarising Results of the ISLA Voxelwise Models
+================================================
+
+Here we visualise the results of the isla voxelwise model. The model is of the form:
+
+`Y ~ s(age) + s(age,by=sex) + sex + pcaslRelMeanRMSMotion`
+
+We show the output of the models where `Y` is ISLA corrected CBF where fwhm = 4
+
+``` r
 #
+```
 
-#+ gather data
+``` r
 results_dir <- "/data/jux/BBL/projects/isla/results/VoxelWrapperModels/imco1"
 rawcbf_dir <- file.path(results_dir, "raw_cbf")
 smoothed3_dir <- file.path(results_dir, "rawSmoothedCBF_3")
@@ -53,10 +65,11 @@ images_df <- c(
       full.names = TRUE)
   ) %>%
   unnest()
-#'
-#' Read in the Niftis and the mask
-#'
-#+ read in
+```
+
+Read in the Niftis and the mask
+
+``` r
 images_df <- images_df %>%
   mutate(
     variable = str_extract(
@@ -73,10 +86,11 @@ images_df <- images_df %>%
 mask <- "/data/jux/BBL/projects/isla/data/Masks/gm10perc_PcaslCoverageMask.nii.gz"
 mask_img <- readNIfTI(mask)
 maskdat <- img_data(mask_img)
-#'
-#' Below is a helper function to extract the data from a nifti and get the proportion of significant and non-significant voxels at $p < 0.05$. Then, we apply the function
-#'
+```
 
+Below is a helper function to extract the data from a nifti and get the proportion of significant and non-significant voxels at *p* &lt; 0.05. Then, we apply the function
+
+``` r
 returnFDR <- function(nif, variable, mask = maskdat) {
 
   tempdat <- img_data(nif)
@@ -94,10 +108,11 @@ results <- images_df %>%
   ungroup() %>%
   select(Y,results) %>%
   unnest()
-#'
-#' Now, plot:
-#'
+```
 
+Now, plot:
+
+``` r
 results %>%
   ggplot(aes(x = Covariate, y = Freq)) +
     geom_bar(aes(fill = Significant), stat = "identity") +
@@ -110,3 +125,6 @@ results %>%
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_fill_brewer(palette = "Set1") +
     facet_wrap(~Y)
+```
+
+![](CBF_Results_imco1_6_files/figure-markdown_github/unnamed-chunk-3-1.png)

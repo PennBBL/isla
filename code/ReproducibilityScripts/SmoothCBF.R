@@ -1,7 +1,7 @@
 #' ---
-#' title: "GMD Correlation Plots"
+#' title: "Smoothing"
 #' author: "Tinashe M. Tapera"
-#' date: "2018-02-04"
+#' date: "2019-02-04"
 #' ---
 
 #+ setup
